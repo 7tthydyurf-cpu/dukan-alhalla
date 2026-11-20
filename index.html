@@ -805,7 +805,7 @@ function staffUpdate(dt){
  EMPS.slice().forEach(e=>eUpd(e,dt))}
 
 // ===== الإعدادات: رفع صوت مخصص + فحص التحديثات =====
-const APP_VER='1.1.0';
+const APP_VER='1.2.0';
 const SETS=(()=>{try{return JSON.parse(localStorage.getItem('dk_set')||'{}')}catch(e){return{}}})();
 Object.assign(AUD.vol,SETS.vol||{});SETS.names=SETS.names||{};
 const saveSets=()=>{try{localStorage.setItem('dk_set',JSON.stringify({vol:AUD.vol,names:SETS.names}))}catch(e){}};
@@ -949,4 +949,24 @@ if(!atHome&&!over){tm+=dt*2;if(tm>=1320){over=true;toast('🌙 انتهى الد
 if(!closed&&!over){spT-=dt;if(spT<=0){spawn();spT=Math.max(4,10-lvl*.7)+Math.random()*5}}
 CU.slice().forEach(c=>upd(c,dt));staffUpdate(dt);aimScan();holdUpdate();scrUpd();if(FR++%20===0)lod();const dn=Math.hypot(P.x-HX,P.z-(HZ+2.5));DOOR.a+=((dn<3.5?1.55:0)-DOOR.a)*Math.min(1,dt*3);DOOR.g.rotation.y=-DOOR.a;hud();R.render(S,C)})(last);
 toast('🏢 مكتب التوظيف (عمود أصفر) على يسار الدكان — وظّف عامل أو كاشير');
-</script></body></html>
+</script>
+<script>
+// Offline support: cache the game and its pinned Three.js dependencies.
+(function(){
+  if (!('serviceWorker' in navigator)) return;
+  navigator.serviceWorker.addEventListener('message', function(event){
+    if (event.data && event.data.type === 'DUKAN_OFFLINE_READY' && typeof toast === 'function') {
+      toast('✅ تم تجهيز اللعبة للعمل دون إنترنت بعد اكتمال التخزين');
+    }
+  });
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('./sw.js', {scope: './'}).catch(function(err){
+      console.warn('Offline setup failed:', err);
+    });
+    if (navigator.storage && navigator.storage.persist) {
+      navigator.storage.persist().catch(function(){});
+    }
+  });
+})();
+</script>
+</body></html>
