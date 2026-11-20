@@ -77,7 +77,7 @@ canvas{position:absolute;left:0;top:0}
 #doorHint{left:50%;top:34px;transform:translateX(-50%);pointer-events:none!important;background:rgba(198,40,40,.9);padding:4px 12px;border-radius:9px;font-size:13px;font-weight:bold;display:none;white-space:nowrap}
 </style></head><body>
 <div id="hud"><button id="gear">⚙</button><div class="day" id="hDay"></div><div class="pill" id="hMoney"></div><div class="pill" id="hLv"></div></div>
-<div id="menu"><button id="bClose">🔒 اقفل وروح البيت</button><button class="g" id="bSleep">🌙 نام للصباح</button><button class="g" id="bBack">🏪 ارجع للدكان</button><button id="bStaff" style="background:#2a6fb0">👥 الموظفون</button><button id="bSet" style="background:#555">⚙️ الإعدادات</button></div>
+<div id="menu"><button id="bClose">🔒 اقفل وروح البيت</button><button class="g" id="bSleep">🌙 نام للصباح</button><button class="g" id="bBack">🏪 ارجع للدكان</button><button id="bStaff" style="background:#2a6fb0">👥 الموظفون</button><button id="bSet" style="background:#555">⚙️ الإعدادات</button><button class="g" id="bSave">💾 حفظ التقدم الآن</button></div>
 <div id="joy"><div id="knob"></div></div>
 <button class="rb" id="bCart">🛒</button><button class="rb" id="bSit">🪑</button><button class="rb" id="bRun">🏃</button><button class="rb" id="bRot">↻</button><button class="rb" id="bCan">🥤</button><button class="rb" id="bAct">✋</button><div id="dot"></div><div id="aimlbl"></div><button class="rb" id="bDrop">Drop</button><div id="rotbar">Rotate object<div id="rtrack"><div id="rknob"></div></div></div><div id="held"></div>
 <div id="dh"><canvas id="spd" width="244" height="244"></canvas><div id="dInfo"></div><div id="doorHint">🚪 الباب مفتوح — اغلقه قبل الانطلاق</div>
@@ -805,7 +805,7 @@ function staffUpdate(dt){
  EMPS.slice().forEach(e=>eUpd(e,dt))}
 
 // ===== الإعدادات: رفع صوت مخصص + فحص التحديثات =====
-const APP_VER='1.0.0';
+const APP_VER='1.1.0';
 const SETS=(()=>{try{return JSON.parse(localStorage.getItem('dk_set')||'{}')}catch(e){return{}}})();
 Object.assign(AUD.vol,SETS.vol||{});SETS.names=SETS.names||{};
 const saveSets=()=>{try{localStorage.setItem('dk_set',JSON.stringify({vol:AUD.vol,names:SETS.names}))}catch(e){}};
@@ -850,6 +850,93 @@ async function checkUpdate(manual){try{const r=await fetch('version.json?t='+Dat
  else if(manual)toast('✅ أنت على آخر إصدار ('+APP_VER+')')}catch(e){if(manual)toast('⚠ تعذّر التحقق من التحديث — تأكد من الإنترنت')}}
 $('updGo').onclick=()=>{location.href=location.pathname+'?v='+(window.__newVer||Date.now())+'&t='+Date.now()};$('updLater').onclick=()=>$('upd').style.display='none';
 setTimeout(()=>checkUpdate(false),4000);setInterval(()=>checkUpdate(false),600000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(()=>checkUpdate(false),1500)});
+
+
+// ===== حفظ تقدم اللعبة تلقائياً =====
+const DK_SAVE_KEY='dukan_alhalla_progress_v1';
+let DK_SAVE_READY=false,DK_PENDING_EMPLOYEES=[],DK_PENDING_CAR_DOORS=null;
+function dkSnapshot(){
+  const customerReturns=Array(ITEMS.length).fill(0);
+  CU.forEach(c=>(c.basket||[]).forEach(b=>{if(b.o&&Number.isInteger(b.o.i))customerReturns[b.o.i]+=Math.max(0,b.q|0)}));
+  const floorCarts=[];
+  CARTM.forEach(m=>{const o=m&&m.userData&&m.userData.cart;if(o&&o.st==='floor'&&o.g&&o.g.parent===S&&!floorCarts.some(x=>x===o))floorCarts.push(o)});
+  return {
+    schema:1, savedAt:Date.now(),
+    player:{x:P.x,z:P.z,yaw:P.yaw,pitch:P.pitch},wasDriving:!!DRV,
+    game:{money,day,tm,xp,lvl,closed,atHome,over,tips:TIPS},
+    stock:ITEMS.map(o=>o.st),
+    fridges:FRS.map(f=>f.slots.slice()),
+    furniture:MV.map(m=>({x:m.g.position.x,y:m.g.position.y,z:m.g.position.z,ry:m.g.rotation.y})),
+    car:{x:CAR.g.position.x,y:CAR.g.position.y,z:CAR.g.position.z,hd:CAR.hd,lights:!!CAR.lights,doorL:DK_PENDING_CAR_DOORS?DK_PENDING_CAR_DOORS.L:CAR.door.L.t,doorR:DK_PENDING_CAR_DOORS?DK_PENDING_CAR_DOORS.R:CAR.door.R.t,
+      slots:CAR.slots.map((o,i)=>o?{t:o.t,n:o.n,slot:i}:null)},
+    floorCarts:floorCarts.map(o=>({t:o.t,n:o.n,x:o.g.position.x,y:o.g.position.y,z:o.g.position.z,ry:o.g.rotation.y})),
+    heldCart:HCART?{t:HCART.t,n:HCART.n}:null, heldCan:HCAN,
+    employees:EMPS.filter(e=>e.hired&&e.role!=='clerk').map(e=>({role:e.role,name:e.name,sp:e.sp,base:e.base,per:e.per,sec:e.sec,err:e.err,wage:e.wage,done:e.done||0,served:e.served||0,
+      cargo:e.carry?{t:e.carry.t,n:e.carry.n,x:e.g.position.x,z:e.g.position.z}:null})),
+    candidates:CANDS.map(c=>({...c})), pendingOrders:ORD.slice(), customerReturns
+  };
+}
+function dkSaveProgress(showToast){
+  if(!DK_SAVE_READY)return false;
+  try{localStorage.setItem(DK_SAVE_KEY,JSON.stringify(dkSnapshot()));if(showToast)toast('✅ تم حفظ تقدم اللعبة على هذا الجهاز');return true}
+  catch(e){if(showToast)toast('⚠ تعذّر الحفظ — مساحة التخزين قد تكون ممتلئة');console.warn('Dukan save failed',e);return false}
+}
+function dkRestoreEmployees(){
+  if(!DK_PENDING_EMPLOYEES.length){DK_SAVE_READY=true;return true}
+  if(!EM.ok&&!EM.failed)return false;
+  DK_PENDING_EMPLOYEES.forEach(d=>{
+    if(!d||!['load','cash'].includes(d.role))return;
+    const e=mkEmp(d.role,{name:String(d.name||'موظف'),hired:true,sp:Number(d.sp)||3,base:Number(d.base)||6,per:Number(d.per)||2,sec:Number(d.sec)||3.4,err:Number(d.err)||0,wage:Number(d.wage)||40});
+    e.done=Math.max(0,d.done|0);e.served=Math.max(0,d.served|0);
+    e.g.position.set(OX+(Math.random()-.5)*.8,0,OZ+1.9);e.g.rotation.y=0;
+    if(e.role==='load')e.st='toCar';
+    else{e.st='toShop';e.path=[[OX,OZ+2.6],[OX,7.2],[0,7.2],[0,4.4],[3.25,3.95]]}
+    if(d.cargo&&Number.isInteger(d.cargo.t)&&d.cargo.t>=0&&d.cargo.t<ITEMS.length){
+      const o=mkCart(d.cargo.t,Math.max(1,d.cargo.n|0));o.st='floor';cartPlace(o,Number(d.cargo.x)||OX,-.04,Number(d.cargo.z)||OZ,0)
+    }
+  });
+  DK_PENDING_EMPLOYEES=[];DK_SAVE_READY=true;return true;
+}
+function dkLoadProgress(){
+  let d;try{const raw=localStorage.getItem(DK_SAVE_KEY);if(!raw){DK_SAVE_READY=true;return false}d=JSON.parse(raw)}catch(e){DK_SAVE_READY=true;console.warn('Dukan save read failed',e);return false}
+  if(!d||d.schema!==1){DK_SAVE_READY=true;return false}
+  try{
+    const g=d.game||{};
+    money=Number.isFinite(g.money)?g.money:money;day=Math.max(1,g.day|0);tm=Math.max(0,Math.min(1439,Number(g.tm)||480));xp=Math.max(0,Math.min(19,g.xp|0));lvl=Math.max(1,g.lvl|0);
+    closed=!!g.closed;atHome=!!g.atHome;over=!!g.over;TIPS=Math.max(0,g.tips|0);shut.visible=closed;
+    if(d.player){P.x=Number(d.player.x)||0;P.z=Number(d.player.z)||0;P.yaw=Number(d.player.yaw)||0;P.pitch=Number(d.player.pitch)||0}
+    if(Array.isArray(d.stock))ITEMS.forEach((o,i)=>o.st=Math.max(0,(Number(d.stock[i])||0)|0));
+    if(Array.isArray(d.fridges))FRS.forEach((f,i)=>{const a=d.fridges[i];if(Array.isArray(a)&&a.length===CAP)f.slots=a.map(v=>Number.isInteger(v)&&v>=0&&v<ITEMS.length?v:-1);refresh(f)});
+    if(Array.isArray(d.furniture))MV.forEach((m,i)=>{const v=d.furniture[i];if(!v)return;m.g.position.set(Number(v.x)||0,Number(v.y)||0,Number(v.z)||0);m.g.rotation.y=Number(v.ry)||0;setRc(m)});
+    if(d.car){const c=d.car;CAR.g.position.set(Number(c.x)||0,Number(c.y)||-.1,Number(c.z)||0);CAR.hd=Number.isFinite(Number(c.hd))?Number(c.hd):Math.PI/2;CAR.g.rotation.y=CAR.hd;CAR.v=0;CAR.gear='P';CAR.hand=true;CAR.gas=CAR.brake=CAR.gasT=CAR.brakeT=0;CAR.lights=!!c.lights;
+      CAR.slots=Array(12).fill(null);(Array.isArray(c.slots)?c.slots:[]).forEach((v,i)=>{if(!v||!Number.isInteger(v.t)||v.t<0||v.t>=ITEMS.length||i>=12)return;const o=mkCart(v.t,Math.max(1,v.n|0));o.st='bed';o.slot=i;CAR.slots[i]=o;CAR.g.add(o.g);o.g.position.set((i%3-1)*.55,.81,-.15-(i/3|0)*.45);o.g.rotation.set(0,0,0);if(!CARTM.includes(o.m))CARTM.push(o.m)});
+      DK_PENDING_CAR_DOORS={L:Number(c.doorL)>.5?1:0,R:Number(c.doorR)>.5?1:0};if(CAR.ok){CAR.door.L.t=DK_PENDING_CAR_DOORS.L;CAR.door.R.t=DK_PENDING_CAR_DOORS.R;DK_PENDING_CAR_DOORS=null}
+    }
+    (Array.isArray(d.floorCarts)?d.floorCarts:[]).forEach(v=>{if(!v||!Number.isInteger(v.t)||v.t<0||v.t>=ITEMS.length)return;const o=mkCart(v.t,Math.max(1,v.n|0));cartPlace(o,Number(v.x)||0,Number(v.y)||-.04,Number(v.z)||0,Number(v.ry)||0)});
+    // Any goods already picked up by customers but not yet paid for return to stock on reload.
+    if(Array.isArray(d.customerReturns))ITEMS.forEach((o,i)=>o.st+=Math.max(0,(d.customerReturns[i]||0)|0));
+    ORD=Array.isArray(d.pendingOrders)?d.pendingOrders.filter(v=>Number.isInteger(v)&&v>=0&&v<ITEMS.length):[];
+    CANDS=Array.isArray(d.candidates)?d.candidates.filter(c=>c&&['load','cash'].includes(c.role)).map(c=>({...c})):CANDS;
+    if(Number.isInteger(d.heldCan)&&d.heldCan>=0&&d.heldCan<ITEMS.length)setHand(d.heldCan);
+    if(d.heldCart&&Number.isInteger(d.heldCart.t)&&d.heldCart.t>=0&&d.heldCart.t<ITEMS.length)setCart(mkCart(d.heldCart.t,Math.max(1,d.heldCart.n|0)));
+    DK_PENDING_EMPLOYEES=Array.isArray(d.employees)?d.employees:[];
+    // A saved driving session resumes safely on foot beside the parked vehicle.
+    if(DRV){DRV=null;app.classList.remove('drv')}
+    if(d.wasDriving){P.x=CAR.g.position.x+Math.cos(CAR.hd)*2.8;P.z=CAR.g.position.z-Math.sin(CAR.hd)*2.8}
+    jarDraw();recount();
+    if(!DK_PENDING_EMPLOYEES.length)DK_SAVE_READY=true;
+    else{let tries=0;const wait=setInterval(()=>{tries++;if(dkRestoreEmployees()||tries>80){clearInterval(wait);if(tries>80)DK_SAVE_READY=true}},250)}
+    toast('💾 تم استرجاع تقدمك السابق');return true;
+  }catch(e){console.warn('Dukan restore failed',e);DK_SAVE_READY=true;toast('⚠ تعذّر استرجاع بعض بيانات الحفظ');return false}
+}
+$('bSave').onclick=()=>dkSaveProgress(true);
+addEventListener('pagehide',()=>dkSaveProgress(false));
+addEventListener('beforeunload',()=>dkSaveProgress(false));
+document.addEventListener('visibilitychange',()=>{if(document.hidden)dkSaveProgress(false)});
+const DK_HAS_SAVE=dkLoadProgress();
+setInterval(()=>dkSaveProgress(false),2500);
+const DK_DOOR_WAIT=setInterval(()=>{if(DK_PENDING_CAR_DOORS&&CAR.ok){CAR.door.L.t=DK_PENDING_CAR_DOORS.L;CAR.door.R.t=DK_PENDING_CAR_DOORS.R;DK_PENDING_CAR_DOORS=null;clearInterval(DK_DOOR_WAIT)}},300);
+// ===== نهاية نظام الحفظ =====
 
 // loop
 let last=performance.now(),spT=3;
