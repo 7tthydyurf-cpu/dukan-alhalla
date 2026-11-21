@@ -51,42 +51,57 @@ canvas{position:absolute;left:0;top:0}
 #rtrack{position:relative;height:30px;margin-top:4px;background:rgba(0,0,0,.35);border-radius:16px;touch-action:none}
 #rknob{position:absolute;top:-4px;left:50%;width:38px;height:38px;margin-left:-19px;border-radius:50%;background:#cfd2d8;box-shadow:0 2px 4px #000;pointer-events:none}
 
-/* ===== نظام القيادة ===== */
+/* ===== نظام القيادة (تصميم مثل ألعاب السيارات) ===== */
 #dh{position:absolute;inset:0;pointer-events:none;display:none;z-index:5}
 #app.drv #dh{display:block}
 #app.drv #joy,#app.drv #bAct,#app.drv #dot,#app.drv #aimlbl,#app.drv #held{display:none!important}
+#app.dhide #sigBar,#app.dhide #bHand,#app.dhide #bLight,#app.dhide #bHorn,#app.dhide #spd,#app.dhide #dInfo{display:none!important}
 #dh>*{position:absolute;pointer-events:auto;touch-action:none}
-#spd{left:6px;top:50px;width:122px;height:122px;pointer-events:none!important}
-#whl{left:14px;bottom:14px;width:148px;height:148px;border-radius:50%;opacity:.93}
-#whl svg{width:100%;height:100%;display:block;pointer-events:none}
-.dB{width:46px;height:46px;border-radius:12px;padding:0;font-size:21px;display:flex;align-items:center;justify-content:center;background:rgba(20,40,70,.82);border:2px solid rgba(90,200,255,.55);box-shadow:0 0 8px rgba(60,180,255,.35);color:#fff}
+#spd{left:4px;top:46px;width:138px;height:138px;pointer-events:none!important}
+.dB{width:46px;height:46px;border-radius:12px;padding:0;font-size:21px;display:flex;align-items:center;justify-content:center;background:rgba(14,32,60,.85);border:2px solid rgba(80,200,255,.6);box-shadow:0 0 8px rgba(60,180,255,.4);color:#fff}
 .dB.on{background:#0b7fb8;border-color:#7fe3ff;box-shadow:0 0 12px #3ccfff}
 .dB.warn.on{background:#c62828;border-color:#ff9a9a;box-shadow:0 0 12px #ff5252}
 .dB.bl{background:#e08a00;border-color:#ffd37a;box-shadow:0 0 14px #ffb300}
-#sigL{left:172px;bottom:70px}#haz{left:224px;bottom:70px}#sigR{left:276px;bottom:70px}
-#bLight{left:172px;bottom:16px}#bHorn{left:224px;bottom:16px}#bHand{left:276px;bottom:16px;font-size:13px;font-weight:bold}
-#pBrake{right:92px;bottom:14px;width:66px;height:96px;border-radius:12px;background:linear-gradient(#cfd3d8,#7d838b);border:2px solid #fff;opacity:.92;display:flex;align-items:center;justify-content:center;color:#222;font-size:13px;font-weight:bold}
-#pGas{right:14px;bottom:14px;width:66px;height:132px;border-radius:12px;background:linear-gradient(#e6e8ec,#80868e);border:2px solid #fff;opacity:.92;display:flex;align-items:center;justify-content:center;color:#222;font-size:13px;font-weight:bold}
-#pBrake.dn,#pGas.dn{filter:brightness(.7);transform:scale(.96)}
-#gears{right:14px;bottom:158px;display:flex;flex-direction:column;gap:4px;background:rgba(10,25,45,.7);border-radius:14px;padding:5px;border:2px solid rgba(90,200,255,.45)}
-#gears button{width:42px;height:34px;padding:0;font-size:17px;font-weight:bold;border-radius:9px;background:rgba(255,255,255,.12);box-shadow:none;color:#cfe}
-#gears button.on{background:#14a3e0;color:#fff;box-shadow:0 0 10px #3ccfff}
-#camRow{right:8px;top:8px;display:flex;gap:6px}
-#camRow .dB{width:44px;height:44px;font-size:20px}
-#dInfo{left:50%;top:8px;transform:translateX(-50%);pointer-events:none!important;background:rgba(0,0,0,.55);padding:3px 10px;border-radius:9px;font-size:12px;white-space:nowrap;display:none}
-#doorHint{left:50%;top:34px;transform:translateX(-50%);pointer-events:none!important;background:rgba(198,40,40,.9);padding:4px 12px;border-radius:9px;font-size:13px;font-weight:bold;display:none;white-space:nowrap}
+#sigBar{left:148px;top:50px;display:flex;gap:5px;padding:5px;background:rgba(8,22,44,.82);border:2px solid rgba(60,190,255,.65);border-radius:14px;box-shadow:0 0 12px rgba(40,170,255,.45)}
+#sigBar .dB{position:static;width:48px;height:40px;border-radius:9px;font-size:20px}
+#sigBar #haz{background:#7a1010;border-color:#ff7a7a}#sigBar #haz.on{background:#e53935}
+#bHand{left:148px;top:106px;width:52px;height:52px;border-radius:50%;font-size:13px;font-weight:bold;flex-direction:column;line-height:1}
+#bHand small{font-size:8px;margin-top:1px}
+#whl{left:8px;bottom:8px;width:140px;height:140px;border-radius:50%;opacity:.95;filter:drop-shadow(0 3px 6px rgba(0,0,0,.6))}
+#whl svg{width:100%;height:100%;display:block;pointer-events:none}
+#bLight{left:158px;bottom:76px;width:58px;height:58px;border-radius:50%;font-size:25px}
+#bHorn{left:158px;bottom:10px;width:58px;height:58px;border-radius:50%;font-size:25px}
+.ped{border:2px solid #fff;color:#222;font-size:13px;font-weight:bold;display:flex;align-items:flex-end;justify-content:center;padding-bottom:6px;opacity:.95;border-radius:12px;background:repeating-linear-gradient(90deg,#d6d9de 0 10px,#6d737b 10px 14px)}
+#pBrake{right:98px;bottom:10px;width:92px;height:84px}
+#pGas{right:12px;bottom:10px;width:70px;height:124px;background:repeating-linear-gradient(0deg,#e1e4e8 0 12px,#6d737b 12px 16px)}
+.ped.dn{filter:brightness(.7);transform:scale(.96)}
+#gears{right:12px;top:64px;width:76px;height:148px;background:linear-gradient(90deg,#10151d,#1b232f);border:2px solid rgba(90,200,255,.5);border-radius:18px;box-sizing:border-box;touch-action:none}
+#gears .gl{position:absolute;right:9px;width:22px;height:36px;line-height:36px;text-align:center;font-weight:bold;font-size:17px;color:#8fa6ba;pointer-events:none}
+#gears .gl.on{color:#fff;text-shadow:0 0 9px #3ccfff}
+#gears::before{content:'';position:absolute;left:21px;top:10px;bottom:10px;width:8px;background:#05080c;border-radius:5px;box-shadow:inset 0 0 4px #000}
+#gKnob{position:absolute;left:6px;top:0;width:38px;height:36px;border-radius:50% 50% 45% 45%;background:radial-gradient(circle at 35% 28%,#6a6a6a,#161616 70%);border:2px solid #d32f2f;box-sizing:border-box;transition:transform .14s;pointer-events:none;box-shadow:0 2px 6px #000}
+#camRow{right:8px;top:6px;display:flex;gap:3px;width:auto}
+.hx{position:relative;width:46px;height:52px;border:0;padding:0;background:none;color:#fff;font-size:20px;filter:drop-shadow(0 0 5px #19c6ff);display:flex;align-items:center;justify-content:center;box-shadow:none}
+.hx::before{content:'';position:absolute;inset:0;background:#3fd2ff;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%)}
+.hx::after{content:'';position:absolute;inset:3px;background:radial-gradient(circle at 50% 35%,#14507d,#06213a);clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%)}
+.hx>span{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;line-height:1;font-size:19px}
+.hx small{font-size:8px;margin-top:1px}
+.hx.on::after{background:radial-gradient(circle at 50% 35%,#1aa0e0,#0b5f95)}
+#dInfo{left:50%;top:60px;transform:translateX(-50%);pointer-events:none!important;background:rgba(0,0,0,.55);padding:3px 10px;border-radius:9px;font-size:12px;white-space:nowrap;display:none}
+#doorHint{left:50%;top:84px;transform:translateX(-50%);pointer-events:none!important;background:rgba(198,40,40,.9);padding:4px 12px;border-radius:9px;font-size:13px;font-weight:bold;display:none;white-space:nowrap}
 </style></head><body>
 <div id="hud"><button id="gear">⚙</button><div class="day" id="hDay"></div><div class="pill" id="hMoney"></div><div class="pill" id="hLv"></div></div>
 <div id="menu"><button id="bClose">🔒 اقفل وروح البيت</button><button class="g" id="bSleep">🌙 نام للصباح</button><button class="g" id="bBack">🏪 ارجع للدكان</button><button id="bStaff" style="background:#2a6fb0">👥 الموظفون</button><button id="bSet" style="background:#555">⚙️ الإعدادات</button></div>
 <div id="joy"><div id="knob"></div></div>
 <button class="rb" id="bCart">🛒</button><button class="rb" id="bSit">🪑</button><button class="rb" id="bRun">🏃</button><button class="rb" id="bRot">↻</button><button class="rb" id="bCan">🥤</button><button class="rb" id="bAct">✋</button><div id="dot"></div><div id="aimlbl"></div><button class="rb" id="bDrop">Drop</button><div id="rotbar">Rotate object<div id="rtrack"><div id="rknob"></div></div></div><div id="held"></div>
-<div id="dh"><canvas id="spd" width="244" height="244"></canvas><div id="dInfo"></div><div id="doorHint">🚪 الباب مفتوح — اغلقه قبل الانطلاق</div>
-<div id="camRow"><button class="dB" id="bCam" title="الكاميرا">🎥</button><button class="dB" id="bDoorD" title="باب السائق">🚪</button><button class="dB" id="bDoorP" title="باب الراكب">🚪</button><button class="dB" id="bOut" title="انزل من السيارة">🚶</button></div>
+<div id="dh"><canvas id="spd" width="276" height="276"></canvas><div id="dInfo"></div><div id="doorHint">🚪 الباب مفتوح — اغلقه قبل الانطلاق</div>
+<div id="camRow"><button class="hx" id="bEye" title="إخفاء الأزرار"><span>👁</span></button><button class="hx" id="bCam" title="الكاميرا"><span>🎥</span></button><button class="hx" id="bPhoto" title="صورة"><span>📷</span></button><button class="hx" id="bDoorD"><span>🚪</span></button><button class="hx" id="bDoorP"><span>🚪</span></button><button class="hx" id="bOut" title="انزل من السيارة"><span>🚶</span></button></div>
+<div id="sigBar"><button class="dB" id="sigL">◀</button><button class="dB warn" id="haz">⚠</button><button class="dB" id="sigR">▶</button></div>
+<button class="dB warn" id="bHand">P<small>BRAKE</small></button>
 <div id="whl"><svg viewBox="0 0 200 200"><g><circle cx="100" cy="100" r="86" fill="none" stroke="#1a1c20" stroke-width="22"/><circle cx="100" cy="100" r="86" fill="none" stroke="#3a3e46" stroke-width="3" stroke-dasharray="2 5"/><path d="M26 112 A78 78 0 0 0 174 112" fill="none" stroke="#c9ccd2" stroke-width="7" stroke-linecap="round"/><path d="M100 14 l0 10" stroke="#e53935" stroke-width="6" stroke-linecap="round"/><path d="M22 104 L78 112 L100 128 L122 112 L178 104 L178 118 L128 134 L100 160 L72 134 L22 118 Z" fill="#23262b" stroke="#111" stroke-width="2"/><ellipse cx="100" cy="108" rx="30" ry="24" fill="#15171a" stroke="#555a63" stroke-width="2"/><text x="100" y="113" fill="#8f949c" font-size="11" text-anchor="middle" font-family="Arial">MAZDA</text></g></svg></div>
-<button class="dB" id="sigL">◀</button><button class="dB warn" id="haz">⚠</button><button class="dB" id="sigR">▶</button>
-<button class="dB" id="bLight">💡</button><button class="dB" id="bHorn">📣</button><button class="dB warn" id="bHand">P</button>
-<div id="gears"><button data-g="P">P</button><button data-g="R">R</button><button data-g="N">N</button><button data-g="D">D</button></div>
-<div id="pBrake">فرامل</div><div id="pGas">بنزين</div></div>
+<button class="dB" id="bLight">💡</button><button class="dB" id="bHorn">📣</button>
+<div id="gears"><div id="gKnob"></div><div class="gl" data-g="P" style="top:0">P</div><div class="gl" data-g="R" style="top:36px">R</div><div class="gl" data-g="N" style="top:72px">N</div><div class="gl" data-g="D" style="top:108px">D</div></div>
+<div class="ped" id="pBrake">فرامل</div><div class="ped" id="pGas">بنزين</div></div>
 <button class="rb" id="bOrder" style="left:224px;bottom:24px;width:64px;height:64px;font-size:26px;display:none">📋</button><div class="modal" id="order"><div class="box"><div class="l"><h3 style="margin:0">📋 اطلب من العمال</h3><button id="oClose">✖</button></div><div id="oList"></div><button class="g" id="oGo" style="width:100%;margin-top:8px">👷 ابدأ التحميل</button></div></div><div id="hint"></div><div id="toast"></div><div id="fade"></div>
 <div class="modal" id="market"><div class="box"><div class="l"><h3 style="margin:0">🛒 متجر الجملة</h3><button id="mClose">✖</button></div><div id="mList"></div><button class="g" id="mDist" style="width:100%;margin-top:8px">📦 وزّع المخزن على الثلاجات</button><p style="font-size:12px;opacity:.8">كرتونة = 10 علب. اشترِ ثم وزّعها، أو انقل العلب بيدك بين الثلاجات (🥤).</p></div></div>
 <div class="modal" id="staff"><div class="box"><div class="l"><h3 style="margin:0" id="stT">👥 الموظفون</h3><button id="stClose">✖</button></div><div id="stList"></div></div></div>
@@ -230,7 +245,9 @@ const pl=new THREE.Mesh(new THREE.PlaneGeometry(.8,.4),new THREE.MeshBasicMateri
 const CAR={g:new THREE.Group(),v:0,hd:Math.PI/2,st:0,wr:0,wh:[],fw:[],slots:Array(12).fill(null)};
 // ===== نظام القيادة: ناقل حركة + دواسات + عجلة قيادة + أبواب + كاميرا داخلية/خارجية =====
 const AUD={buf:{},vol:{music:.6,engine:1,horn:1}};
+CAR.slots=Array(48).fill(null);
 Object.assign(CAR,{
+sp(k){const L=k/12|0,i=k%12;return[(i%3-1)*.55,(this.by||.81)+L*.27,(this.bz||-.15)-(i/3|0)*.45]},
 gear:'P',hand:false,gas:0,brake:0,gasT:0,brakeT:0,whl:0,whlHold:false,lights:false,sig:0,haz:false,sigTurned:false,
 cam:'in',oy:0,op:.32,dist:7.5,lastLook:0,ok:false,eng:null,hornO:null,bl:null,spot:null,
 door:{R:{a:1,t:1,p:null,dir:1},L:{a:1,t:1,p:null,dir:-1}},
@@ -280,8 +297,8 @@ engStart(){try{this.engStop();this.audio();if(AUD.buf.engine){const s=AC.createB
  const m=ac.createGain();m.gain.value=0;const ws=ac.createWaveShaper(),cv=new Float32Array(256);for(let i=0;i<256;i++)cv[i]=Math.tanh((i/128-1)*3);ws.curve=cv;
  const lp=ac.createBiquadFilter();lp.type='lowpass';lp.frequency.value=900;lp.Q.value=1.2;
  const a=mk('sawtooth',.55),b=mk('square',.28),c=mk('triangle',.22);[a,b,c].forEach(x=>x.g.connect(ws));ws.connect(lp);lp.connect(m);m.connect(ac.destination);
- const nb=ac.createBuffer(1,ac.sampleRate,ac.sampleRate),d=nb.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
- const ns=ac.createBufferSource();ns.buffer=nb;ns.loop=true;const nf=ac.createBiquadFilter();nf.type='bandpass';nf.frequency.value=180;nf.Q.value=.8;const ng=ac.createGain();ng.gain.value=.05;ns.connect(nf);nf.connect(ng);ng.connect(m);
+ const N0=ac.sampleRate*2,XF=4000,nb=ac.createBuffer(1,N0,ac.sampleRate),d=nb.getChannelData(0);for(let i=0;i<N0;i++)d[i]=Math.random()*2-1;for(let i=0;i<XF;i++){const w=i/XF;d[i]=d[i]*w+d[N0-XF+i]*(1-w)}
+ const ns=ac.createBufferSource();ns.buffer=nb;ns.loop=true;ns.loopStart=0;ns.loopEnd=(N0-XF)/ac.sampleRate;const nf=ac.createBiquadFilter();nf.type='bandpass';nf.frequency.value=180;nf.Q.value=.8;const ng=ac.createGain();ng.gain.value=.05;ns.connect(nf);nf.connect(ng);ng.connect(m);
  a.o.start();b.o.start();c.o.start();ns.start();this.eng={a:a.o,b:b.o,c:c.o,m,lp,ng,ns,rpm:0,t:1,gl:0}}catch(e){console.log('engine',e)}},
 engStop(){try{const e=this.eng;if(e){e.m.gain.value=0;(e.custom?[e.s]:[e.a,e.b,e.c,e.ns]).forEach(o=>o.stop());this.eng=null}}catch(e){}},
 hornOn(){if(this.hornO)return;try{this.audio();if(AUD.buf.horn){const s=AC.createBufferSource();s.buffer=AUD.buf.horn;s.loop=true;const g=AC.createGain();g.gain.value=.8*AUD.vol.horn;s.connect(g);g.connect(AC.destination);s.start();this.hornO=[s];return}const g=AC.createGain();g.gain.value=.05*AUD.vol.horn;g.connect(AC.destination);const a=AC.createOscillator(),b=AC.createOscillator();a.type=b.type='square';a.frequency.value=392;b.frequency.value=494;a.connect(g);b.connect(g);a.start();b.start();this.hornO=[a,b]}catch(e){}},
@@ -304,36 +321,42 @@ upd(dt){
   if(e.t<.9)tr=e.t<.55?260+90*Math.sin(e.t*45):1700-(e.t-.55)*2300;
   else if(this.gear==='D'||this.gear==='R'){const g=kmh<18?0:kmh<34?1:kmh<52?2:3;tr=850+kmh*[110,62,42,32][g]+this.gas*450}else tr=850+this.gas*3200;
   e.rpm+=(tr-e.rpm)*Math.min(1,dt*(e.t<.9?14:5));e.gl+=((this.gas>.04?1:0)-e.gl)*Math.min(1,dt*(this.gas>.04?10:5));
-  const t=AC.currentTime,gv=Math.min(1,this.gas*4);if(e.custom){e.s.playbackRate.setTargetAtTime(Math.max(.5,Math.min(3,e.rpm/1100)),t,.05);e.m.gain.setTargetAtTime((this.cam==='in'?.6:.35)*AUD.vol.engine*e.gl*(.7+this.gas*.5),t,.05)}else{const f=e.rpm/60*2*(1+(Math.random()-.5)*.012);
-  e.a.frequency.setTargetAtTime(f,t,.03);e.b.frequency.setTargetAtTime(f*2,t,.03);e.c.frequency.setTargetAtTime(f*3.01,t,.03);
-  e.lp.frequency.setTargetAtTime(500+e.rpm*.45+this.gas*500,t,.05);e.ng.gain.setTargetAtTime(.04+this.gas*.08,t,.1);
-  e.m.gain.setTargetAtTime((this.cam==='in'?.16:.1)*AUD.vol.engine*e.gl*(.7+this.gas*.55),t,.05)}}
+  e.ut=(e.ut||0)+dt;
+  if(e.ut>=.05){e.ut=0;const t=AC.currentTime;
+   if(e.custom){e.s.playbackRate.setTargetAtTime(Math.max(.5,Math.min(3,e.rpm/1100)),t,.08);e.m.gain.setTargetAtTime((this.cam==='in'?.6:.35)*AUD.vol.engine*e.gl*(.7+this.gas*.5),t,.08)}
+   else{const f=e.rpm/60*2*(1+.003*Math.sin(e.t*37));
+    e.a.frequency.setTargetAtTime(f,t,.06);e.b.frequency.setTargetAtTime(f*2,t,.06);e.c.frequency.setTargetAtTime(f*3.01,t,.06);
+    e.lp.frequency.setTargetAtTime(500+e.rpm*.45+this.gas*500,t,.08);e.ng.gain.setTargetAtTime(.04+this.gas*.08,t,.15);
+    e.m.gain.setTargetAtTime((this.cam==='in'?.16:.1)*AUD.vol.engine*e.gl*(.7+this.gas*.55),t,.08)}}}
  // زر الدخول عند باب السائق المفتوح
  const be=$('bEnter');if(be){let show=false;if(!DRV&&this.door.L.t>.5&&this.door.L.p){const s=Math.sin(this.hd),c=Math.cos(this.hd),x=this.g.position.x+c*.95+s*1.75,z=this.g.position.z-s*.95+c*1.75;show=Math.hypot(P.x-x,P.z-z)<3.4&&!HELD&&!HCART&&HCAN==null}be.style.display=show?'flex':'none'}
  if(DRV)this.hudUpd();
 },
 // ---------- واجهة السائق ----------
 spBg:null,
-drawSpd(kmh){const cv=$('spd'),g=cv.getContext('2d'),W=244,cx=122,cy=122;
+drawSpd(kmh){const cv=$('spd'),g=cv.getContext('2d'),W=276,cx=138,cy=138,MX=180;
  if(!this.spBg){const b=document.createElement('canvas');b.width=b.height=W;const h=b.getContext('2d');
-  let gr=h.createRadialGradient(cx,cy,10,cx,cy,118);gr.addColorStop(0,'#0c2a52');gr.addColorStop(1,'#04122a');
-  h.fillStyle=gr;h.beginPath();h.arc(cx,cy,116,0,7);h.fill();h.lineWidth=6;h.strokeStyle='#18b4ff';h.stroke();h.lineWidth=2;h.strokeStyle='#8fe0ff';h.beginPath();h.arc(cx,cy,108,0,7);h.stroke();
-  const an=v=>(135+v/120*270)*Math.PI/180;
-  for(let v=0;v<=120;v+=5){const big=v%20===0,a=an(v),r1=big?88:96,r2=104;h.strokeStyle=v>=100?'#ff4d4d':'#dff6ff';h.lineWidth=big?3:1.5;h.beginPath();h.moveTo(cx+Math.cos(a)*r1,cy+Math.sin(a)*r1);h.lineTo(cx+Math.cos(a)*r2,cy+Math.sin(a)*r2);h.stroke();
-   if(big){h.fillStyle=v>=100?'#ff7676':'#fff';h.font='bold 15px Arial';h.textAlign='center';h.textBaseline='middle';h.fillText(v,cx+Math.cos(a)*72,cy+Math.sin(a)*72)}}
+  let gr=h.createRadialGradient(cx,cy,12,cx,cy,132);gr.addColorStop(0,'#0e3668');gr.addColorStop(1,'#041430');
+  h.fillStyle=gr;h.beginPath();h.arc(cx,cy,130,0,7);h.fill();h.lineWidth=7;h.strokeStyle='#1aa9ff';h.stroke();h.lineWidth=2;h.strokeStyle='#8fe0ff';h.beginPath();h.arc(cx,cy,121,0,7);h.stroke();
+  const an=v=>(135+v/MX*270)*Math.PI/180;
+  for(let v=0;v<=MX;v+=5){const big=v%20===0,a=an(v),r1=big?100:108,r2=117;h.strokeStyle=v>=140?'#ff4d4d':'#e8f8ff';h.lineWidth=big?3:1.5;h.beginPath();h.moveTo(cx+Math.cos(a)*r1,cy+Math.sin(a)*r1);h.lineTo(cx+Math.cos(a)*r2,cy+Math.sin(a)*r2);h.stroke();
+   if(big){h.fillStyle=v>=140?'#ff7676':'#fff';h.font='bold 15px Arial';h.textAlign='center';h.textBaseline='middle';h.fillText(v,cx+Math.cos(a)*82,cy+Math.sin(a)*82)}}
   this.spBg=b}
  g.clearRect(0,0,W,W);g.drawImage(this.spBg,0,0);
- const a=(135+Math.min(130,kmh)/120*270)*Math.PI/180;
- g.strokeStyle='#ff2d2d';g.lineWidth=4;g.lineCap='round';g.beginPath();g.moveTo(cx-Math.cos(a)*18,cy-Math.sin(a)*18);g.lineTo(cx+Math.cos(a)*92,cy+Math.sin(a)*92);g.stroke();
- g.fillStyle='#000';g.beginPath();g.arc(cx,cy,36,0,7);g.fill();g.strokeStyle='#18b4ff';g.lineWidth=2;g.stroke();
- g.fillStyle='#fff';g.textAlign='center';g.textBaseline='middle';g.font='bold 30px Arial';g.fillText(Math.round(kmh),cx,cy-5);g.font='bold 13px Arial';g.fillText('KMH',cx,cy+19);
- g.fillStyle=this.gear==='R'?'#ff7676':'#7fe3ff';g.font='bold 18px Arial';g.fillText(this.gear,cx,cy+60)},
+ const a=(135+Math.min(MX+6,kmh)/MX*270)*Math.PI/180;
+ g.strokeStyle='#ff2d2d';g.lineWidth=4;g.lineCap='round';g.beginPath();g.moveTo(cx-Math.cos(a)*20,cy-Math.sin(a)*20);g.lineTo(cx+Math.cos(a)*104,cy+Math.sin(a)*104);g.stroke();
+ g.fillStyle='#000';g.beginPath();g.arc(cx,cy,40,0,7);g.fill();g.strokeStyle='#1aa9ff';g.lineWidth=2;g.stroke();
+ g.fillStyle='#fff';g.textAlign='center';g.textBaseline='middle';g.font='bold 34px Arial';g.fillText(Math.round(kmh),cx,cy-6);g.font='bold 14px Arial';g.fillText('KMH',cx,cy+22);
+ // أسهم الإشارات أسفل العداد
+ const arrow=(x,dir,on)=>{g.fillStyle=on?'#27e060':'#6b7480';g.beginPath();g.moveTo(x+dir*13,cy+93);g.lineTo(x-dir*7,cy+84);g.lineTo(x-dir*7,cy+102);g.closePath();g.fill()};
+ arrow(cx-30,-1,this._L);arrow(cx+30,1,this._R)},
 hudUpd(){const q=id=>$(id);
+ const ph=(performance.now()%700)<350;this._L=ph&&(this.haz||this.sig===-1);this._R=ph&&(this.haz||this.sig===1);
  this.drawSpd(Math.abs(this.v)*3.6);
  q('whl').firstElementChild.style.transform='rotate('+this.whl.toFixed(1)+'deg)';
- q('gears').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.g===this.gear));
- const ph=(performance.now()%700)<350;
- q('sigL').classList.toggle('bl',ph&&(this.haz||this.sig===-1));q('sigR').classList.toggle('bl',ph&&(this.haz||this.sig===1));q('haz').classList.toggle('on',this.haz);
+ const gi=['P','R','N','D'].indexOf(this.gear);q('gKnob').style.transform='translateY('+gi*36+'px)';
+ q('gears').querySelectorAll('.gl').forEach(b=>b.classList.toggle('on',b.dataset.g===this.gear));
+ q('sigL').classList.toggle('bl',this._L);q('sigR').classList.toggle('bl',this._R);q('haz').classList.toggle('on',this.haz);
  q('bLight').classList.toggle('on',this.lights);q('bHand').classList.toggle('on',this.hand);q('bHorn').classList.toggle('on',!!this.hornO);
  q('bDoorD').classList.toggle('on',this.door.L.t>.5);q('bDoorP').classList.toggle('on',this.door.R.t>.5);
  q('bCam').classList.toggle('on',this.cam==='out');
@@ -341,15 +364,19 @@ hudUpd(){const q=id=>$(id);
  q('dInfo').style.display='block';q('dInfo').textContent=this.cam==='in'?'📷 داخلية':'📷 خارجية'}
 });
 (()=>{const g$=id=>document.getElementById(id);
- g$('bDoorD').innerHTML='🚪<small>سائق</small>';g$('bDoorP').innerHTML='🚪<small>راكب</small>';
- ['bDoorD','bDoorP'].forEach(i=>{g$(i).style.flexDirection='column';g$(i).style.fontSize='17px'});
+ g$('bDoorD').innerHTML='<span>🚪<small>سائق</small></span>';g$('bDoorP').innerHTML='<span>🚪<small>راكب</small></span>';
+ g$('bHand').innerHTML='P<small>BRAKE</small>';
  // زر الدخول (يظهر قرب باب السائق المفتوح)
  const be=document.createElement('button');be.className='rb';be.id='bEnter';be.textContent='🚗';be.style.cssText='right:186px;bottom:24px;width:64px;height:64px;font-size:26px;display:none';app.appendChild(be);be.onclick=()=>enterCar();
  g$('bDoorD').onclick=()=>CAR.toggleDoor('L');g$('bDoorP').onclick=()=>CAR.toggleDoor('R');
  g$('bCam').onclick=()=>CAR.toggleCam();g$('bOut').onclick=()=>exitCar();
  g$('sigL').onclick=()=>CAR.toggleSig(-1);g$('sigR').onclick=()=>CAR.toggleSig(1);g$('haz').onclick=()=>CAR.toggleHaz();
  g$('bLight').onclick=()=>CAR.toggleLights();g$('bHand').onclick=()=>CAR.toggleHand();
- g$('gears').querySelectorAll('button').forEach(b=>b.onclick=()=>CAR.setGear(b.dataset.g));
+ {const gr=g$('gears');let gid=null;const rowOf=e=>{const r=gr.getBoundingClientRect(),d=m2(e.clientX-(r.left+r.width/2),e.clientY-(r.top+r.height/2));return Math.max(0,Math.min(3,Math.floor((d[1]+74)/36)))};
+ gr.onpointerdown=e=>{gid=e.pointerId;try{gr.setPointerCapture(gid)}catch(_){}CAR.setGear(['P','R','N','D'][rowOf(e)]);e.preventDefault()};
+ gr.onpointermove=e=>{if(e.pointerId===gid)CAR.setGear(['P','R','N','D'][rowOf(e)])};gr.onpointerup=gr.onpointercancel=e=>{if(e.pointerId===gid)gid=null}}
+ g$('bEye').onclick=()=>{app.classList.toggle('dhide');g$('bEye').classList.toggle('on',app.classList.contains('dhide'))};
+ g$('bPhoto').onclick=()=>{try{R.render(S,C);const a=document.createElement('a');a.href=R.domElement.toDataURL('image/png');a.download='dukkan-'+Date.now()+'.png';document.body.appendChild(a);a.click();a.remove();toast('📷 تم حفظ الصورة')}catch(e){toast('⚠ تعذّر حفظ الصورة')}};
  const hold=(id,on,off)=>{const el=g$(id);el.onpointerdown=e=>{try{el.setPointerCapture(e.pointerId)}catch(_){}on();e.preventDefault()};const up=()=>off();el.onpointerup=el.onpointercancel=el.onlostpointercapture=up};
  hold('bHorn',()=>CAR.hornOn(),()=>CAR.hornOff());
  const ped=(id,key)=>{const el=g$(id);hold(id,()=>{CAR[key]=1;el.classList.add('dn')},()=>{CAR[key]=0;el.classList.remove('dn')})};
@@ -513,7 +540,7 @@ s.scale.setScalar(.56);
 CAR.g.children.slice().forEach(o=>{if(!(o.children[0]&&o.children[0].userData&&o.children[0].userData.cart))CAR.g.remove(o)});
 CARM.length=0;CAR.g.add(s);CAR.extras();s.traverse(o=>{if(o.isMesh){o.userData.car=1;CARM.push(o)}});
 CAR.wh=wh;CAR.fw=fw;CAR.by=.81;CAR.bz=-.15;CAR.cx=.585;CAR.cz=1.36;CAR.cy=1.6;CAR.ex=1.9;CAR.hitD=[-1.9,-.95,0,.95,1.9];CAR.hitR=1.15;
-CAR.g.children.forEach(o=>{if(o.children[0]&&o.children[0].userData&&o.children[0].userData.cart){const k=o.children[0].userData.cart.slot;o.position.set((k%3-1)*.55,CAR.by,CAR.bz-(k/3|0)*.45)}});
+CAR.g.children.forEach(o=>{if(o.children[0]&&o.children[0].userData&&o.children[0].userData.cart){const k=o.children[0].userData.cart.slot;o.position.set(...CAR.sp(k))}});
 CAR.loaded=true;try{$('carD').textContent=''}catch(_){}}catch(e){console.log('truck model',e);toast('⚠ خطأ في تحميل السيارة: '+(e&&e.message||e))}};
 let carTry=0;function loadCar(){carTry++;try{new THREE.GLTFLoader().parse(b64($('carD').textContent.trim()).buffer,'',g=>carCb(g.scene),e=>{console.log(e);if(carTry<4)setTimeout(loadCar,1500);else toast('⚠ تعذّر تحميل السيارة')})}catch(e){console.log(e);if(carTry<4)setTimeout(loadCar,1500)}}
 loadCar();setTimeout(function chk(){if(!CAR.loaded&&carTry<4){loadCar();setTimeout(chk,9000)}},9000);
@@ -591,7 +618,7 @@ function buyCart(t){if(HELD||HCART||HCAN!=null)return toast('أنزل ما في 
 function takeCart(o){if(HELD||HCART||HCAN!=null)return toast('أنزل ما في يدك أولاً');if(o.st==='bed'){CAR.slots[o.slot]=null}cartRemove(o);o.st='hand';setCart(o)}
 function dropCart(){const o=HCART;if(!o)return;const f=AIM.m&&AIM.m.fr;
 if(f){let n=0;while(o.n>0&&f.slots.includes(-1)){f.slots[f.slots.indexOf(-1)]=o.t;o.n--;n++}if(!n)return toast('الثلاجة كاملة');refresh(f);if(!o.n){setCart(null);toast('✅ أفرغت الكرتونة في الثلاجة')}else toast('امتلأت الثلاجة — بقي '+o.n+' علبة');return}
-if(AIM.k==='car'||(AIM.k==='cart'&&AIM.cart.st==='bed')){const k=CAR.slots.indexOf(null);if(k<0)return toast('صندوق السيارة ممتلئ');CAR.slots[k]=o;o.st='bed';o.slot=k;CAR.g.add(o.g);o.g.position.set((k%3-1)*.55,CAR.by||.94,(CAR.bz||-.55)-(k/3|0)*.45);o.g.rotation.set(0,Math.round(ROTV/(Math.PI/2))*Math.PI/2,0);if(!CARTM.includes(o.m))CARTM.push(o.m);setCart(null);toast('🚚 حمّلت الكرتونة في السيارة');return}
+if(AIM.k==='car'||(AIM.k==='cart'&&AIM.cart.st==='bed')){const k=CAR.slots.indexOf(null);if(k<0)return toast('صندوق السيارة ممتلئ');CAR.slots[k]=o;o.st='bed';o.slot=k;CAR.g.add(o.g);o.g.position.set(...CAR.sp(k));o.g.rotation.set(0,Math.round(ROTV/(Math.PI/2))*Math.PI/2,0);if(!CARTM.includes(o.m))CARTM.push(o.m);setCart(null);toast('🚚 حمّلت الكرتونة في السيارة');return}
 const g=aimGround();if(!g)return toast('وجّه النقطة على الأرض أو الثلاجة أو صندوق السيارة');o.st='floor';cartPlace(o,g.x,g.y,g.z,P.yaw+ROTV);setCart(null);toast('✅ تم الوضع')}
 const chairFront=m=>{const t=m.g.rotation.y;return[Math.cos(t),-Math.sin(t)]};
 $('bSit').onclick=()=>{if(SIT){const s=SIT;SIT=null;$('bSit').textContent='🪑';if(s.m){const f=chairFront(s.m),nx=P.x+f[0]*.75,nz=P.z+f[1]*.75;if(!blocked(nx,nz)){P.x=nx;P.z=nz}else{P.x=s.px;P.z=s.pz}}return}
@@ -674,7 +701,7 @@ function mkBody(role){if(EM.ok){try{const m=cloneSk(EM.proto),B={};
   const g=new THREE.Group();g.add(m);
   return{g,sk:skOf(m)}}catch(er){console.log(er)}}
  const p=person();p.g.traverse(o=>{if(o.isMesh&&o.material&&o.material.color&&o.material.color.getHex()===0x39b54a&&o.parent)o.parent.remove(o)});return{g:p.g,pc:p}}
-function mkEmp(role,o){const b=mkBody(role),e=Object.assign({id:EID++,role,g:b.g,sk:b.sk,pc:b.pc,mode:'idle',ph:Math.random()*6,t:Math.random()*9,pm:{w:0,s:0,sc:0,wv:0,c:0,cl:0,ho:0},cum:{},path:null,sp:3,carry:null,seated:false,st:'idle',done:0,hired:false,served:0},o||{});S.add(e.g);EMPS.push(e);return e}
+function mkEmp(role,o){const b=mkBody(role),e=Object.assign({id:EID++,role,g:b.g,sk:b.sk,pc:b.pc,mode:'idle',ph:Math.random()*6,t:Math.random()*9,pm:{w:0,s:0,sc:0,wv:0,c:0,cl:0,ho:0,sf:0},cum:{},path:null,sp:3,carry:null,seated:false,st:'idle',done:0,hired:false,served:0},o||{});S.add(e.g);EMPS.push(e);return e}
 function mkClerk(){const e=mkEmp('clerk',{name:'مدير التوظيف'});e.g.position.set(OX+.9,0,OZ-1.6);e.g.rotation.y=0;e.st='clerk'}
 // ---------- حركة الهيكل العظمي ----------
 const _qa=new THREE.Quaternion(),_qb=new THREE.Quaternion(),_I=new THREE.Quaternion();
@@ -686,23 +713,23 @@ function rawSb(e,p,x,y,z){const n=e.sk.N[p],b=e.sk.B[n];if(!b)return;const pn=b.
 function ePose(e,dt){
  if(e.pc){e.pc.t=e.t;pose(e.pc,e.mode==='walk'?1:(e.mode==='scan'||e.mode==='wave')?2:e.mode==='sit'?3:0);return}
  const m=e.pm,k=Math.min(1,dt*9),md=e.mode;
- m.w+=((md==='walk'?1:0)-m.w)*k;m.s+=((md==='sit'?1:0)-m.s)*k;m.sc+=((md==='scan'?1:0)-m.sc)*k;m.wv+=((md==='wave'?1:0)-m.wv)*k;m.c+=((e.carry?1:0)-m.c)*k;m.cl+=((md==='climb'?1:0)-m.cl)*k;m.ho+=((md==='hold'?1:0)-m.ho)*k;
+ m.w+=((md==='walk'?1:0)-m.w)*k;m.s+=((md==='sit'?1:0)-m.s)*k;m.sc+=((md==='scan'?1:0)-m.sc)*k;m.wv+=((md==='wave'?1:0)-m.wv)*k;m.c+=((e.carry?1:0)-m.c)*k;m.cl+=((md==='climb'?1:0)-m.cl)*k;m.ho+=((md==='hold'?1:0)-m.ho)*k;m.sf+=((md==='sitf'?1:0)-m.sf)*k;
  e.ph+=dt*(m.w>.1?(e.carry?7:8.6):1.2);
- const s=Math.sin(e.ph),c=Math.cos(e.ph),A=m.w*(1-m.s),sit=m.s,car=m.c,sc=m.sc,wv=m.wv,cl=m.cl,ho=m.ho,lc=Math.sin(e.t*8),sway=Math.min(1,Math.abs(CAR.v)/8);
+ const s=Math.sin(e.ph),c=Math.cos(e.ph),A=m.w*(1-m.s),sit=m.s,car=m.c,sc=m.sc,wv=m.wv,cl=m.cl,ho=m.ho,sf=m.sf,lc=Math.sin(e.t*8),sway=Math.min(1,Math.abs(CAR.v)/8);
  sb(e,'Hips_',0,.1*s*A,0);
- sb(e,'LeftUpLeg_',-.5*s*A-1.5*sit-.9*cl*(.5+.5*lc)-.12*ho,0,0);sb(e,'RightUpLeg_',.5*s*A-1.5*sit-.9*cl*(.5-.5*lc)-.12*ho,0,0);
- sb(e,'LeftLeg_',.8*Math.max(0,c)*A+1.45*sit+1.0*cl*(.5+.5*lc)+.25*ho+.05*ho*sway*Math.sin(e.t*5),0,0);sb(e,'RightLeg_',.8*Math.max(0,-c)*A+1.45*sit+1.0*cl*(.5-.5*lc)+.25*ho-.05*ho*sway*Math.sin(e.t*5),0,0);
+ sb(e,'LeftUpLeg_',-.5*s*A-1.5*sit-.9*cl*(.5+.5*lc)-.12*ho-2.05*sf,0,0);sb(e,'RightUpLeg_',.5*s*A-1.5*sit-.9*cl*(.5-.5*lc)-.12*ho-2.05*sf,0,0);
+ sb(e,'LeftLeg_',.8*Math.max(0,c)*A+1.45*sit+1.0*cl*(.5+.5*lc)+.25*ho+2.85*sf+.05*ho*sway*Math.sin(e.t*5),0,0);sb(e,'RightLeg_',.8*Math.max(0,-c)*A+1.45*sit+1.0*cl*(.5-.5*lc)+.25*ho+2.85*sf-.05*ho*sway*Math.sin(e.t*5),0,0);
  const sw=.45*s*A*(1-car);
- sb(e,'LeftArm_',sw-1.0*car-.9*cl-.5*ho,0,-1.28-.29*car-.2*cl-.12*ho);
- sb(e,'RightArm_',-sw-1.0*car-.9*sc-.9*cl-.5*ho,0,1.28+.29*car+.6*sc-2.73*wv+.2*cl+.12*ho);
- sb(e,'LeftForeArm_',-.2-.35*car-.25*Math.max(0,-s)*A-.3*cl-.5*ho,0,0);
- sb(e,'RightForeArm_',-.2-.35*car-.9*sc-.3*cl-.5*ho,0,.55*Math.sin(e.ph*3)*wv);
- sb(e,'Spine_',.04*A-.08*car+.08*sc+.04*ho*sway*Math.sin(e.t*3),-.1*s*A,0);
+ sb(e,'LeftArm_',sw-1.0*car-.9*cl-.5*ho-.45*sf,0,-1.28-.29*car-.2*cl-.12*ho-.1*sf);
+ sb(e,'RightArm_',-sw-1.0*car-.9*sc-.9*cl-.5*ho-.45*sf,0,1.28+.29*car+.6*sc-2.73*wv+.2*cl+.12*ho+.1*sf);
+ sb(e,'LeftForeArm_',-.2-.35*car-.25*Math.max(0,-s)*A-.3*cl-.5*ho-.8*sf,0,0);
+ sb(e,'RightForeArm_',-.2-.35*car-.9*sc-.3*cl-.5*ho-.8*sf,0,.55*Math.sin(e.ph*3)*wv);
+ sb(e,'Spine_',.04*A-.08*car+.08*sc-.1*sf+.03*(ho+sf)*sway*Math.sin(e.t*3),-.1*s*A,0);
  sb(e,'Head_',-.04*sc,Math.sin(e.t*.7)*.12*(1-A)-.04*s*A,0);
  e.sk.B[e.sk.N['Hips_']].position.y=e.sk.hy+.02*Math.cos(2*e.ph)*A}
 // ---------- مساعدات ----------
 const cw=(lx,lz)=>{const c=CAR,s=Math.sin(c.hd),co=Math.cos(c.hd);return[c.g.position.x+co*lx+s*lz,c.g.position.z-s*lx+co*lz]};
-const STAND=[[.5,-2.05],[-.5,-2.05]];
+const STAND=[[.45,-2.3],[-.45,-2.3]];
 function eWalk(e,dt){const w=e.path&&e.path[0];if(!w){e.mode='idle';return true}
  const p=e.g.position,dx=w[0]-p.x,dz=w[1]-p.z,d=Math.hypot(dx,dz);
  if(d<.14){e.path.shift();if(!e.path.length){e.mode='idle';return true}return false}
@@ -710,7 +737,7 @@ function eWalk(e,dt){const w=e.path&&e.path[0];if(!w){e.mode='idle';return true}
 const gy=()=>-CAR.g.position.y;
 function hopTo(e,a,b,d,done){e.hop={t:0,d,a,b,done};e.st='climb'}
 function startBoard(e){const used=EMPS.filter(x=>x.seatTaken).map(x=>x.seat);let i=[0,1].find(k=>!used.includes(k));if(i==null)i=0;e.seat=i;e.seatTaken=true;CAR.g.add(e.g);e.g.rotation.set(0,0,0);
- hopTo(e,[STAND[i][0],gy(),-3.45],[STAND[i][0],CAR.by||.81,STAND[i][1]],1.05,()=>{e.seated=true;e.g.rotation.set(0,i?-.9:.9,0);e.mode='hold';e.st='ride'})}
+ hopTo(e,[STAND[i][0],gy(),-3.45],[STAND[i][0],CAR.by||.81,STAND[i][1]],1.05,()=>{e.seated=true;e.g.rotation.set(0,0,0);e.mode='sitf';e.st='ride'})}
 function startAlight(e){const i=e.seat||0,p=e.g.position;e.g.rotation.set(0,Math.PI,0);
  hopTo(e,[p.x,p.y,p.z],[STAND[i][0],gy(),-3.45],.95,()=>{unseat(e);e.st='toBed';e.path=[cw(0,-3.35)]})}
 function unseat(e){const i=e.seat||0,p=cw(STAND[i][0],-3.45);e.seated=false;e.seatTaken=false;e.hop=null;S.add(e.g);e.g.position.set(p[0],0,p[1]);e.g.rotation.y=CAR.hd+Math.PI;e.mode='idle'}
@@ -720,7 +747,7 @@ function fire(e,why){if(!e.hired)return;
  if(e.carry){const o=e.carry;e.g.remove(o.g);o.st='floor';cartPlace(o,e.g.position.x,-.04,e.g.position.z,0);e.carry=null}
  if(e.seated||e.seatTaken)unseat(e);
  e.hired=false;e.mode='idle';leavePath(e);toast(why||('🚫 طردت '+e.name));beep(220,.15)}
-function statusT(e){const n={climb:'يتسلّق الصندوق',toCar:'رايح للسيارة',open:'بيركب السيارة',ride:'راكب في صندوق السيارة 🚚',exit:'نزل من السيارة',toBed:'يجيب كرتونة من الصندوق',take:'يجيب كرتونة',deliver:'يوصّل الكرتونة للثلاجة',drop:'يفرّغ في الثلاجة',back:'راجع للسيارة',toShop:'رايح للدكان',work:'على الكاشير',lExit:'نزل للتحميل',lGo:'رايح سوق الجملة',lPick:'يشيل كرتونة',lBring:'يحمّل الصندوق',lBack:'راجع للسيارة'};return(n[e.st]||'')+(e.role==='load'&&e.done?' · نزّل '+e.done:'')+(e.role==='cash'&&e.served?' · خدم '+e.served+' زبون':'')}
+function statusT(e){const n={climb:'يتسلّق الصندوق',toCar:'رايح للسيارة',open:'بيركب السيارة',ride:'جالس في صندوق السيارة 🚚',exit:'نزل من السيارة',toBed:'يجيب كرتونة من الصندوق',take:'يجيب كرتونة',deliver:'يوصّل الكرتونة للثلاجة',drop:'يفرّغ في الثلاجة',back:'راجع للسيارة',toShop:'رايح للدكان',work:'على الكاشير',lExit:'نزل للتحميل',lGo:'رايح سوق الجملة',lPick:'يشيل كرتونة',lBring:'يحمّل الصندوق',lBack:'راجع للسيارة'};return(n[e.st]||'')+(e.role==='load'&&e.done?' · نزّل '+e.done:'')+(e.role==='cash'&&e.served?' · خدم '+e.served+' زبون':'')}
 function mkCand(role){const nm=pick(NAMES1)+' '+pick(NAMES2);const r=Math.random()*3|0;
  if(role==='load'){const st=r+1;return{role,name:nm,stars:st,sp:2.5+st*.5,base:6+st*3,per:2+st}}
  const st=r+1;return{role,name:nm,stars:st,sec:[0,5,3.4,2.2][st],err:[0,.16,.08,.02][st],wage:[0,40,58,80][st]}}
@@ -730,7 +757,7 @@ const starS=n=>'⭐'.repeat(n);
 function renderStaff(){const L=EMPS.filter(e=>e.hired);
  let h='<h4 style="margin:8px 0 2px">👥 موظفوك</h4>'+(L.length?L.map(e=>`<div class="row"><span style="font-size:24px">${e.role==='cash'?'🛒':'📦'}</span><b>${e.name}<br><small>${e.role==='cash'?'كاشير':'عامل تحميل'} · ${statusT(e)}</small></b><button data-f="${e.id}" style="background:#c0392b">طرد</button></div>`).join(''):'<div style="opacity:.8;padding:6px 0;font-size:14px">ما عندك موظفين الآن</div>');
  if(STF.office)h+='<h4 style="margin:12px 0 2px">🧑‍💼 مرشحون للتوظيف</h4>'+(CANDS.length?CANDS.map((c,i)=>`<div class="row"><span style="font-size:24px">${c.role==='cash'?'🛒':'📦'}</span><b>${c.name}<br><small>${c.role==='cash'?'كاشير · راتب '+c.wage+' ج باليوم · سرعة '+starS(c.stars)+' · دقة '+starS(c.stars):'عامل تحميل · '+c.base+' ج + '+c.per+' ج لكل كرتونة · قوة '+starS(c.stars)}</small></b><button class="g" data-h="${i}">تعيين</button></div>`).join(''):'<div style="opacity:.8;padding:6px 0;font-size:14px">لا يوجد مرشحون الآن — ارجع بكرة</div>');
- h+='<p style="font-size:12px;opacity:.8;margin:10px 0 0">📦 عامل التحميل يركب في صندوق السيارة: عند سوق الجملة اضغط 📋 ليجيب لك الكراتين ويحمّلها، وقرب الدكان ينزّلها في الثلاجات ثم يأخذ أجره ويمشي. 🛒 الكاشير يحاسب الزبائن بدالك ويأخذ راتبه كل صباح.</p>';
+ h+='<p style="font-size:12px;opacity:.8;margin:10px 0 0">📦 عامل التحميل يركب جالساً في صندوق السيارة: عند سوق الجملة اضغط 📋 ليجيب لك الكراتين ويحمّلها، وقرب الدكان ينزّلها في الثلاجات ثم يأخذ أجره ويمشي. 🛒 الكاشير يحاسب الزبائن بدالك ويأخذ راتبه كل صباح.</p>';
  $('stList').innerHTML=h;
  $('stList').querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{const e=EMPS.find(x=>x.id==b.dataset.f);if(e)fire(e);renderStaff()});
  $('stList').querySelectorAll('[data-h]').forEach(b=>b.onclick=()=>{hire(+b.dataset.h);renderStaff()})}
@@ -755,7 +782,7 @@ function cashUpd(e,dt){const fc=frontC();
 function eUpd(e,dt){e.t+=dt;
  switch(e.st){
  case'toCar':{if(Math.abs(CAR.v)>.5){e.mode='idle';break}e.path=[cw(0,-3.45)];if(eWalk(e,dt)){startBoard(e);e.g.rotation.y=0}break}
-  case'ride':e.mode='hold';break;
+  case'ride':{e.mode='sitf';const ty=(CAR.by||.81)-.82;e.g.position.y+=(ty-e.g.position.y)*Math.min(1,dt*5);break}
  case'climb':{const h=e.hop;if(!h){e.st='ride';break}h.t+=dt;const p=Math.min(1,h.t/h.d),q=p*p*(3-2*p);e.g.position.set(h.a[0]+(h.b[0]-h.a[0])*q,h.a[1]+(h.b[1]-h.a[1])*q+.28*Math.sin(Math.PI*p),h.a[2]+(h.b[2]-h.a[2])*q);e.mode='climb';if(p>=1){e.mode='idle';const f=h.done;e.hop=null;f()}break}
  case'exit':e.wt-=dt;if(e.wt<=0)startAlight(e);break;
  case'toBed':if(eWalk(e,dt))e.st='take';break;
@@ -781,7 +808,7 @@ function eUpd(e,dt){e.t+=dt;
  case'lPick':if(eWalk(e,dt)){e.wt=.8;e.st='lGrab';e.g.rotation.y=Math.PI/2}break;
  case'lGrab':e.wt-=dt;if(e.wt<=0){const o=mkCart(e.want,10);o.st='npc';e.g.add(o.g);o.g.position.set(0,1.04,.52);o.g.rotation.set(0,0,0);e.carry=o;const pz=STZ-3.15+e.want*.9;e.path=[[STX+4,pz],[STX-7.5,pz],cw(-1.8,-3.3),cw(0,-3.35)];e.st='lBring'}break;
  case'lBring':if(eWalk(e,dt)){const o=e.carry,k=CAR.slots.indexOf(null);e.g.remove(o.g);e.carry=null;
-  if(k<0){o.st='floor';cartPlace(o,e.g.position.x,-.04,e.g.position.z,0)}else{CAR.slots[k]=o;o.st='bed';o.slot=k;CAR.g.add(o.g);o.g.position.set((k%3-1)*.55,CAR.by||.94,(CAR.bz||-.55)-(k/3|0)*.45);o.g.rotation.set(0,0,0);if(!CARTM.includes(o.m))CARTM.push(o.m)}
+  if(k<0){o.st='floor';cartPlace(o,e.g.position.x,-.04,e.g.position.z,0)}else{CAR.slots[k]=o;o.st='bed';o.slot=k;CAR.g.add(o.g);o.g.position.set(...CAR.sp(k));o.g.rotation.set(0,0,0);if(!CARTM.includes(o.m))CARTM.push(o.m)}
   beep(700,.04);e.done2=(e.done2||0)+1;e.st='lGo'}break;
  case'lBack':if(eWalk(e,dt))e.st='toCar';break;
  case'toShop':if(eWalk(e,dt)){e.st='work';e.g.rotation.y=Math.PI}break;
@@ -808,7 +835,7 @@ function staffUpdate(dt){
  EMPS.slice().forEach(e=>eUpd(e,dt))}
 
 // ===== الإعدادات: رفع صوت مخصص + فحص التحديثات =====
-const APP_VER='1.0.2';
+const APP_VER='1.0.3';
 const SETS=(()=>{try{return JSON.parse(localStorage.getItem('dk_set')||'{}')}catch(e){return{}}})();
 Object.assign(AUD.vol,SETS.vol||{});SETS.names=SETS.names||{};
 const saveSets=()=>{try{localStorage.setItem('dk_set',JSON.stringify({vol:AUD.vol,names:SETS.names}))}catch(e){}};
@@ -820,7 +847,7 @@ const IDB={db:null,open(){return new Promise((ok,no)=>{if(this.db)return ok(this
 const MU=new Audio();MU.loop=true;MU.preload='auto';let muUrl=null,muWant=false;
 function muPlay(){if(!muUrl)return;MU.volume=AUD.vol.music;const p=MU.play();if(p&&p.catch)p.catch(()=>{const f=()=>{removeEventListener('pointerdown',f);if(muWant)MU.play().catch(()=>{})};addEventListener('pointerdown',f)})}
 function muSet(ab,type){if(muUrl)URL.revokeObjectURL(muUrl);muUrl=null;MU.pause();if(!ab){muWant=false;return}muUrl=URL.createObjectURL(new Blob([ab],{type:type||'audio/mpeg'}));MU.src=muUrl;muWant=true;muPlay()}
-document.addEventListener('visibilitychange',()=>{if(document.hidden)MU.pause();else if(muWant)muPlay()});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)MU.pause();else{if(muWant)muPlay();try{if(AC&&AC.state==='suspended'&&DRV)AC.resume()}catch(e){}}});
 function decodeTo(kind,ab){return new Promise(ok=>{try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();const done=b=>{AUD.buf[kind]=b;ok(true)};const p=AC.decodeAudioData(ab.slice(0),done,()=>ok(false));if(p&&p.catch)p.catch(()=>ok(false))}catch(e){ok(false)}})}
 async function applySaved(kind){try{const r=await IDB.get(kind);if(!r)return;if(kind==='music')muSet(r.data,r.type);else await decodeTo(kind,r.data)}catch(e){console.log('audio load',e)}}
 ['music','engine','horn'].forEach(applySaved);
