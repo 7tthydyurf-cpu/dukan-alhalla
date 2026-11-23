@@ -247,7 +247,18 @@ const pl=new THREE.Mesh(new THREE.PlaneGeometry(.8,.4),new THREE.MeshBasicMateri
 const CAR={g:new THREE.Group(),v:0,hd:Math.PI/2,st:0,wr:0,wh:[],fw:[],slots:Array(12).fill(null)};
 // ===== نظام القيادة: ناقل حركة + دواسات + عجلة قيادة + أبواب + كاميرا داخلية/خارجية =====
 const AUD={buf:{},vol:{music:.6,engine:1,horn:1}};
-CAR.slots=Array(48).fill(null);
+CAR.slots=Array(1000).fill(null);CAR.vis=48;
+const carN=()=>{let n=0;for(const c of CAR.slots)if(c)n++;return n};
+function carSet(o,k){CAR.slots[k]=o;o.st='bed';o.slot=k;if(k<CAR.vis){CAR.g.add(o.g);o.g.position.set(...CAR.sp(k));if(!CARTM.includes(o.m))CARTM.push(o.m)}else cartRemove(o)}
+function carFill(){const V=CAR.vis;let j=CAR.slots.length-1;for(let k=0;k<V;k++){if(CAR.slots[k])continue;while(j>=V&&!CAR.slots[j])j--;if(j<V)break;const o=CAR.slots[j];CAR.slots[j]=null;carSet(o,k)}}
+function carLbl(){const n=carN();let L=CAR.lbl;
+ if(n<=CAR.vis){if(L)L.visible=false;return}
+ if(!L){const cv=document.createElement('canvas');cv.width=256;cv.height=100;L=CAR.lbl=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cv),transparent:true,depthWrite:false}));L.scale.set(1.8,.7,1);L.userData.cv=cv;L.userData.n=-1}
+ if(L.parent!==CAR.g)CAR.g.add(L);
+ L.visible=true;L.position.set(0,(CAR.by||.81)+CAR.vis/12*.27+1,(CAR.bz||-.15)-.7);
+ if(L.userData.n!==n){L.userData.n=n;const g=L.userData.cv.getContext('2d');g.clearRect(0,0,256,100);g.fillStyle='rgba(20,30,50,.88)';g.beginPath();g.moveTo(26,4);g.arcTo(252,4,252,96,22);g.arcTo(252,96,4,96,22);g.arcTo(4,96,4,4,22);g.arcTo(4,4,252,4,22);g.closePath();g.fill();
+  g.textAlign='center';g.textBaseline='middle';g.direction='ltr';g.fillStyle='#fff';g.font='bold 46px Tahoma,Arial,sans-serif';g.fillText('\u{1F4E6} '+n,128,38);
+  g.direction='rtl';g.fillStyle='#ffd34e';g.font='bold 24px Tahoma,Arial,sans-serif';g.fillText('من '+CAR.slots.length+' كرتونة',128,78);L.material.map.needsUpdate=true}}
 // ---- صوت المحرك ثلاثي الأبعاد ----
 let AUDL=null;
 function audListener(){if(AUDL)return AUDL;try{THREE.AudioContext.setContext(AC);AUDL=new THREE.AudioListener();C.add(AUDL)}catch(e){AUDL=null;console.log('audio listener',e)}return AUDL}
@@ -629,10 +640,10 @@ if(HCAN!=null){const k=f.slots.indexOf(-1);if(k<0)return toast('الثلاجة �
 let k=-1,t;if(AIM.can){k=AIM.can.k;t=AIM.can.t}else for(let i=CAP-1;i>=0;i--)if(f.slots[i]>=0){k=i;t=f.slots[i];break}
 if(k<0)return toast('الثلاجة فاضية');f.slots[k]=-1;refresh(f);setHand(t);toast('🥤 أخذت '+ITEMS[t].n)};
 function buyCart(t){if(HELD||HCART||HCAN!=null)return toast('أنزل ما في يدك أولاً');const c=ITEMS[t].c*10;if(money<c)return toast('الفلوس ما كفاية ('+c+' ج)');money-=c;beep(900,.08);setCart(mkCart(t,10));toast('🛒 اشتريت كرتونة '+ITEMS[t].n+' (−'+c+' ج)')}
-function takeCart(o){if(HELD||HCART||HCAN!=null)return toast('أنزل ما في يدك أولاً');if(o.st==='bed'){CAR.slots[o.slot]=null}cartRemove(o);o.st='hand';setCart(o)}
+function takeCart(o){if(HELD||HCART||HCAN!=null)return toast('أنزل ما في يدك أولاً');const bed=o.st==='bed';if(bed){CAR.slots[o.slot]=null}cartRemove(o);o.st='hand';setCart(o);if(bed)carFill()}
 function dropCart(){const o=HCART;if(!o)return;const f=AIM.m&&AIM.m.fr;
 if(f){let n=0;while(o.n>0&&f.slots.includes(-1)){f.slots[f.slots.indexOf(-1)]=o.t;o.n--;n++}if(!n)return toast('الثلاجة كاملة');refresh(f);if(!o.n){setCart(null);toast('✅ أفرغت الكرتونة في الثلاجة')}else toast('امتلأت الثلاجة — بقي '+o.n+' علبة');return}
-if(AIM.k==='car'||(AIM.k==='cart'&&AIM.cart.st==='bed')){const k=CAR.slots.indexOf(null);if(k<0)return toast('صندوق السيارة ممتلئ');CAR.slots[k]=o;o.st='bed';o.slot=k;CAR.g.add(o.g);o.g.position.set(...CAR.sp(k));o.g.rotation.set(0,Math.round(ROTV/(Math.PI/2))*Math.PI/2,0);if(!CARTM.includes(o.m))CARTM.push(o.m);setCart(null);toast('🚚 حمّلت الكرتونة في السيارة');return}
+if(AIM.k==='car'||(AIM.k==='cart'&&AIM.cart.st==='bed')){const k=CAR.slots.indexOf(null);if(k<0)return toast('صندوق السيارة ممتلئ ('+CAR.slots.length+' كرتونة)');o.g.rotation.set(0,Math.round(ROTV/(Math.PI/2))*Math.PI/2,0);carSet(o,k);setCart(null);toast('🚚 حمّلت الكرتونة في السيارة ('+carN()+' / '+CAR.slots.length+')');return}
 const g=aimGround();if(!g)return toast('وجّه النقطة على الأرض أو الثلاجة أو صندوق السيارة');o.st='floor';cartPlace(o,g.x,g.y,g.z,P.yaw+ROTV);setCart(null);toast('✅ تم الوضع')}
 const chairFront=m=>{const t=m.g.rotation.y;return[Math.cos(t),-Math.sin(t)]};
 $('bSit').onclick=()=>{if(SIT){const s=SIT;SIT=null;$('bSit').textContent='🪑';if(s.m){const f=chairFront(s.m),nx=P.x+f[0]*.75,nz=P.z+f[1]*.75;if(!blocked(nx,nz)){P.x=nx;P.z=nz}else{P.x=s.px;P.z=s.pz}}return}
@@ -759,7 +770,7 @@ const RAIL=1.19,FLR=.81,SL=[];
 [-.15,-.75,-1.35,-1.95].forEach((z,r)=>[-.5,0,.5].forEach((x,c)=>SL.push({m:'hold',x,z,yaw:x<0?.7:x>0?-.7:(r%2?.35:-.35),h:FLR,top:1})));
 [1.35,1.9,2.4].forEach(z=>[-.5,0,.5].forEach(x=>SL.push({m:'sitf',x,z,yaw:0,h:2.1})));
 function slotOf(i){const b=SL[i%SL.length],L=Math.floor(i/SL.length);return L?Object.assign({},b,{h:b.h+.45*L}):b}
-const stk=()=>.27*Math.ceil(CAR.slots.filter(Boolean).length/12);
+const stk=()=>.27*Math.ceil(Math.min(carN(),CAR.vis)/12);
 function slotY(sp){return sp.m==='sit'?sp.h-.86:sp.m==='sitf'?sp.h-.82:sp.h+(sp.top?stk():0)}
 const normA=a=>{while(a>Math.PI)a-=2*Math.PI;while(a<-Math.PI)a+=2*Math.PI;return a};
 function eWalk(e,dt){const w=e.path&&e.path[0];if(!w){e.mode='idle';return true}
@@ -849,7 +860,7 @@ function eUpd(e,dt){e.t+=dt;
  case'lPick':if(eWalk(e,dt)){e.wt=.8;e.st='lGrab';e.g.rotation.y=Math.PI/2}break;
  case'lGrab':e.wt-=dt;if(e.wt<=0){const o=mkCart(e.want,10);o.st='npc';e.g.add(o.g);o.g.position.set(0,1.04,.52);o.g.rotation.set(0,0,0);e.carry=o;const pz=STZ-3.15+e.want*.9;e.path=[[STX+4,pz],[STX-7.5,pz],cw(-1.8,-3.3),cw(0,-3.35)];e.st='lBring'}break;
  case'lBring':if(eWalk(e,dt)){const o=e.carry,k=CAR.slots.indexOf(null);e.g.remove(o.g);e.carry=null;
-  if(k<0){o.st='floor';cartPlace(o,e.g.position.x,-.04,e.g.position.z,0)}else{CAR.slots[k]=o;o.st='bed';o.slot=k;CAR.g.add(o.g);o.g.position.set(...CAR.sp(k));o.g.rotation.set(0,0,0);if(!CARTM.includes(o.m))CARTM.push(o.m)}
+  if(k<0){o.st='floor';cartPlace(o,e.g.position.x,-.04,e.g.position.z,0)}else{o.g.rotation.set(0,0,0);carSet(o,k)}
   beep(700,.04);e.done2=(e.done2||0)+1;e.st='lGo'}break;
  case'lBack':if(eWalk(e,dt))e.st='toCar';break;
  case'toShop':if(eWalk(e,dt)){e.st='work';e.g.rotation.y=Math.PI}break;
@@ -860,8 +871,10 @@ function eUpd(e,dt){e.t+=dt;
 function orderFree(){return CAR.slots.filter(x=>!x).length-ORD.length}
 const ordTot=()=>ORD.reduce((a,t)=>a+ITEMS[t].c*10,0);
 function renderOrder(){const cnt=ITEMS.map((_,i)=>ORD.filter(t=>t===i).length);
- $('oList').innerHTML=ITEMS.map((o,i)=>`<div class="row"><span style="font-size:24px">${o.e}</span><b>${o.n}<br><small>الكرتونة ${o.c*10} ج · في الطلب: ${cnt[i]}</small></b><button data-a="${i}">+</button><button data-r="${i}" style="background:#6b5a4a">−</button></div>`).join('')+`<div style="margin:8px 0;font-size:14px">الإجمالي: ${ordTot()} ج · أماكن فاضية في الصندوق: ${orderFree()}</div>`;
- $('oList').querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{if(orderFree()<=0)toast('صندوق السيارة ممتلئ');else ORD.push(+b.dataset.a);renderOrder()});
+ $('oList').innerHTML=ITEMS.map((o,i)=>`<div class="row"><span style="font-size:24px">${o.e}</span><b>${o.n}<br><small>الكرتونة ${o.c*10} ج · في الطلب: ${cnt[i]}</small></b><button data-a="${i}">+</button><button data-a10="${i}" dir="ltr">+10</button><button data-r="${i}" style="background:#6b5a4a">−</button><button data-r10="${i}" dir="ltr" style="background:#6b5a4a">−10</button></div>`).join('')+`<div style="margin:8px 0;font-size:14px">الإجمالي: ${ordTot()} ج · أماكن فاضية في الصندوق: ${orderFree()} من ${CAR.slots.length}</div>`;
+ $('oList').querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{if(orderFree()<=0)toast('صندوق السيارة ممتلئ ('+CAR.slots.length+' كرتونة)');else ORD.push(+b.dataset.a);renderOrder()});
+ $('oList').querySelectorAll('[data-a10]').forEach(b=>b.onclick=()=>{const n=Math.min(10,orderFree());if(n<=0)toast('صندوق السيارة ممتلئ ('+CAR.slots.length+' كرتونة)');else for(let i=0;i<n;i++)ORD.push(+b.dataset.a10);renderOrder()});
+ $('oList').querySelectorAll('[data-r10]').forEach(b=>b.onclick=()=>{for(let i=0;i<10;i++){const j=ORD.lastIndexOf(+b.dataset.r10);if(j<0)break;ORD.splice(j,1)}renderOrder()});
  $('oList').querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{const i=ORD.lastIndexOf(+b.dataset.r);if(i>=0)ORD.splice(i,1);renderOrder()})}
 $('bOrder').onclick=()=>{ORD=[];renderOrder();$('order').style.display='flex'};$('oClose').onclick=()=>{ORD=[];$('order').style.display='none'};
 $('oGo').onclick=()=>{if(!ORD.length)return toast('اختر كراتين أولاً');const t=ordTot();if(money<t)return toast('الفلوس ما كفاية ('+t+' ج)');
@@ -877,7 +890,7 @@ function staffUpdate(dt){
  EMPS.slice().forEach(e=>eUpd(e,dt))}
 
 // ===== الإعدادات: رفع صوت مخصص + فحص التحديثات =====
-const APP_VER='1.2.1';
+const APP_VER='1.2.2';
 const SETS=(()=>{try{return JSON.parse(localStorage.getItem('dk_set')||'{}')}catch(e){return{}}})();
 Object.assign(AUD.vol,SETS.vol||{});SETS.names=SETS.names||{};
 const saveSets=()=>{try{localStorage.setItem('dk_set',JSON.stringify({vol:AUD.vol,names:SETS.names}))}catch(e){}};
@@ -935,7 +948,7 @@ function snapshot(){
  const o={v:1,ts:Date.now(),money:money+(typeof ordTot==='function'&&ORD.length?ordTot():0),day,tm,xp,lvl,TIPS,
   st:ITEMS.map(i=>i.st),fr:FRS.map(f=>f.slots.slice()),
   mv:MV.map(m=>[+m.g.position.x.toFixed(3),+m.g.position.z.toFixed(3),+m.g.rotation.y.toFixed(3)]),
-  car:{x:+CAR.g.position.x.toFixed(3),z:+CAR.g.position.z.toFixed(3),hd:+CAR.hd.toFixed(4),lights:CAR.lights,sl:CAR.slots.map(c=>c?[c.t,c.n]:0)},
+  car:{x:+CAR.g.position.x.toFixed(3),z:+CAR.g.position.z.toFixed(3),hd:+CAR.hd.toFixed(4),lights:CAR.lights,sl:(a=>{while(a.length&&!a[a.length-1])a.pop();return a})(CAR.slots.map(c=>c?[c.t,c.n]:0))},
   floor:[],P:{x:+P.x.toFixed(2),z:+P.z.toFixed(2),yaw:+P.yaw.toFixed(3)},inCar:!!DRV};
  CARTM.forEach(m=>{const c=m.userData.cart;if(c&&c.st==='floor'&&c.g.parent)o.floor.push([c.t,c.n,+c.g.position.x.toFixed(2),+c.g.position.y.toFixed(2),+c.g.position.z.toFixed(2),+c.g.rotation.y.toFixed(2)])});
  if(HCART)o.floor.push([HCART.t,HCART.n,+P.x.toFixed(2),-.04,+P.z.toFixed(2),0]);
@@ -951,14 +964,14 @@ function restoreWorld(){const s=SAVED;if(!s||s.v!==1)return;try{
  (s.mv||[]).forEach((a,i)=>{const m=MV[i];if(m){m.g.position.x=a[0];m.g.position.z=a[1];m.g.rotation.y=a[2];setRc(m)}});
  recount();FRS.forEach(f=>{refresh(f)});
  if(s.car){CAR.g.position.x=s.car.x;CAR.g.position.z=s.car.z;CAR.hd=s.car.hd;CAR.g.rotation.y=s.car.hd;CAR.lights=!!s.car.lights;
-  (s.car.sl||[]).forEach((c,k)=>{if(c){const o=mkCart(c[0],c[1]);o.st='bed';o.slot=k;CAR.slots[k]=o;CAR.g.add(o.g);o.g.position.set(...CAR.sp(k));o.g.rotation.set(0,0,0);if(!CARTM.includes(o.m))CARTM.push(o.m)}})}
+  (s.car.sl||[]).forEach((c,k)=>{if(c&&k<CAR.slots.length)carSet(mkCart(c[0],c[1]),k)});carFill()}
  (s.floor||[]).forEach(a=>{const o=mkCart(a[0],a[1]);o.st='floor';cartPlace(o,a[2],a[3],a[4],a[5])});
  if(s.P){if(s.inCar){const p=cw(2.2,1.7);P.x=p[0];P.z=p[1];P.yaw=CAR.hd-Math.PI/2}else{P.x=s.P.x;P.z=s.P.z;P.yaw=s.P.yaw}}
  }catch(e){console.log('restore',e)}}
 function restoreStaff(n){if(staffRestored)return;if(!EM.ok&&!EM.failed&&n<120)return setTimeout(()=>restoreStaff(n+1),500);
  try{(SAVED.staff||[]).forEach(r=>{const e=mkEmp(r.role,{name:r.name,hired:true,sp:r.sp||3,base:r.base,per:r.per,sec:r.sec,err:r.err,price:r.price,stars:r.stars});
   if(r.role==='cash'){e.slot=(r.slot!=null)?r.slot:(r.cx<0?1:0);const p0=POST[e.slot];e.g.position.set(p0[0],0,p0[1]);e.g.rotation.y=Math.PI;e.st='work';if(e.slot===1)addDesk()}
-  else{if(r.carry){const k=CAR.slots.indexOf(null);if(k>=0){const o=mkCart(r.carry[0],r.carry[1]);o.st='bed';o.slot=k;CAR.slots[k]=o;CAR.g.add(o.g);o.g.position.set(...CAR.sp(k));if(!CARTM.includes(o.m))CARTM.push(o.m)}}
+  else{if(r.carry){const k=CAR.slots.indexOf(null);if(k>=0)carSet(mkCart(r.carry[0],r.carry[1]),k)}
    let i=0;const u=EMPS.filter(x=>x.seatTaken).map(x=>x.seat);while(u.includes(i))i++;e.seat=i;e.seatTaken=true;e.seated=true;CAR.g.add(e.g);const sp=slotOf(i);e.g.position.set(sp.x,slotY(sp),sp.z);e.g.rotation.set(0,sp.yaw,0);e.mode=sp.m;e.st='ride'}})}catch(er){console.log('restore staff',er)}
  staffRestored=true}
 restoreWorld();restoreStaff(0);
@@ -1081,7 +1094,7 @@ if(!blocked(P.x+vx*sp,P.z))P.x=Math.max(-150,Math.min(150,P.x+vx*sp));if(!blocke
 if(DRV){carCam(dt)}else{camY+=((SIT?SIT.h:1.7)-camY)*Math.min(1,dt*8);C.position.set(P.x,camY,P.z)}C.rotation.set(P.pitch,P.yaw,0);
 if(!atHome&&!over){tm+=dt*2;if(tm>=1320){over=true;toast('🌙 انتهى الدوام — روح البيت من ⚙')}}
 if(!closed&&!over){spT-=dt;if(spT<=0){spawn();spT=Math.max(4,10-lvl*.7)+Math.random()*5}}
-CU.slice().forEach(c=>upd(c,dt));staffUpdate(dt);aimScan();holdUpdate();scrUpd();if(FR++%20===0)lod();const dn=Math.hypot(P.x-HX,P.z-(HZ+2.5));DOOR.a+=((dn<3.5?1.55:0)-DOOR.a)*Math.min(1,dt*3);DOOR.g.rotation.y=-DOOR.a;hud();R.render(S,C)})(last);
+CU.slice().forEach(c=>upd(c,dt));staffUpdate(dt);carLbl();aimScan();holdUpdate();scrUpd();if(FR++%20===0)lod();const dn=Math.hypot(P.x-HX,P.z-(HZ+2.5));DOOR.a+=((dn<3.5?1.55:0)-DOOR.a)*Math.min(1,dt*3);DOOR.g.rotation.y=-DOOR.a;hud();R.render(S,C)})(last);
 toast('🏢 مكتب التوظيف (عمود أصفر) على يسار الدكان — وظّف عامل أو كاشير');
 
 /* ===== لعب فردي / جماعي (بدون إنترنت — WebRTC على نفس الشبكة المحلية) ===== */
