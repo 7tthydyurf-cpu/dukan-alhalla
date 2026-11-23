@@ -1,5 +1,5 @@
 // دكان الحلة — تشغيل بدون إنترنت
-const VER = '1.0.5';
+const VER = '1.0.6';
 const CACHE = 'dukkan-' + VER;
 const IDX = new URL('index.html', self.registration.scope).href;
 const LIBS = [
