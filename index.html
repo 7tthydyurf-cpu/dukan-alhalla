@@ -877,7 +877,7 @@ function staffUpdate(dt){
  EMPS.slice().forEach(e=>eUpd(e,dt))}
 
 // ===== الإعدادات: رفع صوت مخصص + فحص التحديثات =====
-const APP_VER='1.2.0';
+const APP_VER='1.2.1';
 const SETS=(()=>{try{return JSON.parse(localStorage.getItem('dk_set')||'{}')}catch(e){return{}}})();
 Object.assign(AUD.vol,SETS.vol||{});SETS.names=SETS.names||{};
 const saveSets=()=>{try{localStorage.setItem('dk_set',JSON.stringify({vol:AUD.vol,names:SETS.names}))}catch(e){}};
@@ -979,10 +979,31 @@ self.mkBasket=w=>{const h=new THREE.Group();if(BP)fillB(h,w);else pend.push({h,w
 // ---- الأسعار (قابلة للتعديل ومحفوظة) ----
 const PD={oil:['زيت عباد الشمس','🌻',1.8],choco:['شوكولاتة','🍫',3.2],pn:['زبدة فول سوداني','🥜',1.8],tea:['شاي','🍵',2.75],sug:['سكر','🍬',.25],orange:['برتقال','🍊',1.77],apple:['تفاح','🍎',1.97],tang:['يوسفي','🟠',1.77],pear:['أفوكادو','🥑',.6],milk:['حليب','🥛',1.25],cereal:['كورن فليكس','🥣',3.2],jam:['مربى','🍓',2.5],water:['مياه','💧',.5],coffee:['قهوة','☕',4.5],soda:['مشروب غازي','🥤',.99],flour:['طحين','🌾',1.5],tin:['معلبات','🥫',1.99]};
 let SV={};try{SV=JSON.parse(localStorage.getItem('dk_prices')||'{}')}catch(e){}
-const PRICE={},PRODS={},TGM={};
+const PRICE={},PRODS={},TGM={},PRODUCE={orange:1,apple:1,tang:1,pear:1};
 Object.keys(PD).forEach(k=>{PRICE[k]=SV[k]>0?SV[k]:PD[k][2];PRODS[k]={n:PD[k][0],e:PD[k][1],k,stns:[],get p(){return PRICE[k]}};
- const c=document.createElement('canvas');c.width=128;c.height=64;const t=new THREE.CanvasTexture(c);TGM[k]={c,t,m:new THREE.MeshBasicMaterial({map:t})}});
-function drawTag(k){const g=TGM[k].c.getContext('2d');g.fillStyle='#ffee00';g.fillRect(0,0,128,64);g.fillStyle='#000';g.font='bold 44px monospace';g.textAlign='center';g.textBaseline='middle';g.fillText('$'+F2(PRICE[k]),64,35);TGM[k].t.needsUpdate=true}
+ const c=document.createElement('canvas');c.width=512;c.height=256;const t=new THREE.CanvasTexture(c);t.anisotropy=Math.min(8,R.capabilities.getMaxAnisotropy());
+ TGM[k]={c,t,m:new THREE.MeshLambertMaterial({map:t,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2})}});
+// بطاقة سعر رف: شريط الاسم + السعر بخانتين عشريتين + العملة + باركود (مرسومة على لوحة 256×128 بدقة مضاعفة)
+const CUR='جنيه',FA='Tahoma,Arial,sans-serif';
+function drawTag(k){const g=TGM[k].c.getContext('2d'),pd=PRODUCE[k];g.setTransform(2,0,0,2,0,0);
+ g.fillStyle='#fbfbf8';g.fillRect(0,0,256,128);
+ g.fillStyle=pd?'#2e8b3a':'#14766b';g.fillRect(0,0,256,32);
+ g.textBaseline='middle';g.fillStyle='#fff';
+ g.direction='ltr';g.textAlign='left';g.font='22px sans-serif';g.fillText(PRODS[k].e,10,17);
+ g.direction='rtl';g.textAlign='right';let fs=22;for(;fs>12;fs--){g.font='bold '+fs+'px '+FA;if(g.measureText(PRODS[k].n).width<=180)break}
+ g.fillText(PRODS[k].n,246,17);
+ const p=(+PRICE[k]).toFixed(2);g.fillStyle='#111';g.textBaseline='alphabetic';g.textAlign='left';
+ g.font='bold 22px '+FA;const cw=g.measureText(CUR).width;
+ let ps=74;for(;ps>26;ps-=2){g.font='bold '+ps+'px Arial,Helvetica,sans-serif';if(g.measureText(p).width+cw+10<=228)break}
+ g.font='bold '+ps+'px Arial,Helvetica,sans-serif';const pw=g.measureText(p).width,x0=(256-pw-cw-10)/2,by=69+ps*.36;
+ g.direction='ltr';g.fillText(p,x0+cw+10,by);
+ g.direction='rtl';g.font='bold 22px '+FA;g.fillText(CUR,x0,by);
+ g.fillStyle='#e1e4e6';g.fillRect(10,106,236,1);
+ let s=0;for(let i=0;i<k.length;i++)s=(s*31+k.charCodeAt(i))>>>0;const rnd=()=>(s=(s*1664525+1013904223)>>>0)/4294967296;
+ g.fillStyle='#222';for(let x=12;x<104;){const w=rnd()<.5?1:2;g.fillRect(x,110,w,12);x+=w+(rnd()<.5?1:2)}
+ g.fillStyle='#666';g.textBaseline='middle';g.textAlign='right';g.direction='rtl';g.font='bold 14px '+FA;g.fillText(pd?'سعر الحبة':'سعر القطعة',246,116);
+ g.strokeStyle='#aeb4b9';g.lineWidth=1.5;g.strokeRect(.75,.75,254.5,126.5);
+ TGM[k].t.needsUpdate=true}
 Object.keys(PD).forEach(drawTag);
 function setPrice(k,v){v=Math.max(.05,Math.round(v*100)/100);if(!isFinite(v))return;PRICE[k]=v;drawTag(k);try{localStorage.setItem('dk_prices',JSON.stringify(PRICE))}catch(e){}}
 self.nearStn=(o,p)=>{let b=null,d=1e9;o.stns.forEach(s=>{const e=Math.hypot(s.stand[0]-p.x,s.stand[1]-p.z);if(e<d){d=e;b=s}});return b};
@@ -1003,7 +1024,7 @@ const IMS={},CAPN=700,m4=new THREE.Matrix4(),tm=new THREE.Matrix4(),ms=new THREE
 const mat=c=>MC[c]||(MC[c]=L(c));
 function put(k,base,x,y,z,sx,sy,sz,ry){let o=IMS[k];if(!o){const d=KD[k],im=new THREE.InstancedMesh(d[0],L(d[1]),CAPN);im.frustumCulled=false;im.count=0;S.add(im);o=IMS[k]={im,n:0}}
  if(o.n>=CAPN)return;ms.makeScale(sx,sy,sz);mr.makeRotationY(ry||0);tm.makeTranslation(x,y,z).multiply(mr).multiply(ms);m4.copy(base).multiply(tm);o.im.setMatrixAt(o.n++,m4);o.im.count=o.n;o.im.instanceMatrix.needsUpdate=true}
-function tag(par,k,x,y,z,w,rz){const m=new THREE.Mesh(gT,TGM[k].m);m.scale.set(w,w,1);m.position.set(x,y,z);m.rotation.z=rz||0;par.add(m)}
+function tag(par,k,x,y,z,w){const m=new THREE.Mesh(gT,TGM[k].m);m.scale.set(w,w,1);m.position.set(x,y,z);par.add(m)}
 function mbox(g,w,h,d,c,x,y,z){const m=new THREE.Mesh(gB,mat(c));m.scale.set(w,h,d);m.position.set(x,y,z);g.add(m)}
 function unit(x,z,ry){const g=new THREE.Group();g.position.set(x,.06,z);g.rotation.y=ry;S.add(g);g.updateMatrixWorld(true);return g}
 function rect(x,z,ry,W,D){const s=Math.abs(Math.sin(ry))>.5,hw=(s?D:W)/2,hd=(s?W:D)/2;RC.push([x-hw,x+hw,z-hd,z+hd])}
@@ -1016,7 +1037,7 @@ function row(g,k,W,y){const B=g.matrixWorld,n=sp=>Math.floor((W-.1)/sp),X=(i,sp)
 function shelf(x,z,ry,W,rows,stand){const g=unit(x,z,ry),H=1.95,D=.5;
  mbox(g,W,H,.03,0xa9c9e0,0,H/2,-D/2);[-1,1].forEach(s=>mbox(g,.04,H,D,0x9fc2dc,s*W/2,H/2,0));mbox(g,W,.3,D,0x7fa8c6,0,.15,0);mbox(g,W+.06,.22,D+.06,0x45bfd4,0,H+.11,0);
  rows.forEach((k,i)=>{const by=.32+i*.4;mbox(g,W,.04,D,0xcfe3f2,0,by,0);mbox(g,W,.1,.03,0x7fb4dc,0,by-.03,D/2);row(g,k,W,by+.02);
-  tag(g,k,-W/2+.28+(i%2)*(W-.56),by-.03,D/2+.02,.24,i%2?.06:-.06);PRODS[k].stns.push({g,stand})});rect(x,z,ry,W,D)}
+  tag(g,k,-W/2+.17,by-.03,D/2+.019,.18);PRODS[k].stns.push({g,stand})});rect(x,z,ry,W,D)}
 const FP={orange:[.062,.062,.135],apple:[.058,.058,.125],tang:[.05,.05,.11],pear:[.05,.085,.11]};
 function fruit(x,z,ry,W,rows,stand){const g=unit(x,z,ry),H=1.8,D=.95;
  [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([a,b])=>mbox(g,.06,H,.06,0x3d4f6e,a*(W/2-.03),H/2,b*(D/2-.03)));mbox(g,W,H,.03,0x2c3f63,0,H/2,-D/2);
@@ -1024,7 +1045,7 @@ function fruit(x,z,ry,W,rows,stand){const g=unit(x,z,ry),H=1.8,D=.95;
   mbox(t,w,.03,.62,0xe3b078,0,0,0);mbox(t,w,.12,.03,0xc88a4a,0,.04,.31);mbox(t,.03,.12,.62,0xc88a4a,-w/2,.04,0);mbox(t,.03,.12,.62,0xc88a4a,w/2,.04,0);
   g.updateMatrixWorld(true);const [rx,rh,sp]=FP[k],Wi=W-.2;
   for(let q=0;q<4;q++)for(let j=0;j<Math.floor(Wi/sp);j++){const xx=-Wi/2+sp/2+j*sp+(q%2?sp*.4:0);if(xx>Wi/2)continue;put(k,t.matrixWorld,xx,.015+rh,-.2+q*.13,rx,rh,rx,Math.random()*6)}
-  tag(t,k,0,.03,.335,.34,-.04);PRODS[k].stns.push({g,stand})});rect(x,z,ry,W,D)}
+  tag(t,k,0,.04,.329,.22);PRODS[k].stns.push({g,stand})});rect(x,z,ry,W,D)}
 // ---- التوزيع: بين الثلاجات وعلى الجدران، بدون تداخل ----
 const A=Math.PI/2;
 shelf(-5.6,-3.75,A,2.0,['oil','choco','pn','tea'],[-4.8,-3.75]);
@@ -1045,9 +1066,9 @@ glb('aisleD',s=>{const root=s.children[0]||s,G=new THREE.Group();G.position.set(
   if(/produce-tilt-bin/.test(nm))k=X0[String(Math.round(n.position.x*10)/10)];else{const m=nm.match(/-(apple|pear|orange)$/);if(m)k=m[1]}
   if(k){n.position.x-={apple:-1.5,pear:0,orange:1.5}[k];n.position.z-=1.3;B[k].add(n)}else G.add(n)});
  B.apple.position.set(-3.25,.06,-1.7);B.orange.position.set(3.25,.06,-1.7);[B.apple,B.orange].forEach(b=>{b.rotation.y=Math.PI;S.add(b)});
- const RW=[['milk','cereal','jam','water'],['coffee','soda','flour','tin']];
- [[-1.875,-.625],[.625,1.875]].forEach((pair,si)=>pair.forEach(gx=>RW[si].forEach((k,i)=>{tag(G,k,gx,.25+i*.45-.09,.3,.26,i%2?.05:-.05);PRODS[k].stns.push({g:G,stand:[gx,-.85]})})));
- [['apple',-3.25],['orange',3.25]].forEach(([k,x])=>{tag(S,k,x,.32,-1.33,.34,-.04);PRODS[k].stns.push({g:{rotation:{y:0}},stand:[x,-.95]})});
+ const RW=[['milk','cereal','jam','water'],['coffee','soda','flour','tin']],RY=[.239,.689,1.139,1.589];
+ [[-1.875,0],[-.625,1],[.625,0],[1.875,1]].forEach(([gx,si])=>RW[si].forEach((k,i)=>{tag(G,k,gx-.38,RY[i],-1.231,.14);PRODS[k].stns.push({g:G,stand:[gx,-.85]})}));
+ [['apple',-3.25],['orange',3.25]].forEach(([k,x])=>{tag(S,k,x,.685,-1.526,.2);PRODS[k].stns.push({g:{rotation:{y:0}},stand:[x,-.95]})});
  try{$('aisleD').textContent=''}catch(_){}});
 })();
 
