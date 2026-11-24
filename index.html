@@ -67,10 +67,7 @@ canvas{position:absolute;left:0;top:0}
 #sigBar #haz{background:#7a1010;border-color:#ff7a7a}#sigBar #haz.on{background:#e53935}
 #bHand{left:148px;top:106px;width:52px;height:52px;border-radius:50%;font-size:13px;font-weight:bold;flex-direction:column;line-height:1}
 #bHand small{font-size:8px;margin-top:1px}
-#whl{display:none!important}
- #steerPad{left:8px;bottom:18px;display:flex;gap:10px;align-items:center}
- #steerPad button{width:66px;height:66px;border-radius:18px;font-size:34px;font-weight:900;background:rgba(14,32,60,.9);border:2px solid rgba(80,200,255,.75);box-shadow:0 0 10px rgba(60,180,255,.45);touch-action:none}
- #steerPad button:active{background:#0b7fb8;transform:scale(.96)}
+#whl{left:8px;bottom:8px;width:140px;height:140px;border-radius:50%;opacity:.95;filter:drop-shadow(0 3px 6px rgba(0,0,0,.6))}
 #whl svg{width:100%;height:100%;display:block;pointer-events:none}
 #bLight{left:158px;bottom:76px;width:58px;height:58px;border-radius:50%;font-size:25px}
 #bHorn{left:158px;bottom:10px;width:58px;height:58px;border-radius:50%;font-size:25px}
@@ -101,7 +98,7 @@ canvas{position:absolute;left:0;top:0}
 <div id="camRow"><button class="hx" id="bEye" title="إخفاء الأزرار"><span>👁</span></button><button class="hx" id="bCam" title="الكاميرا"><span>🎥</span></button><button class="hx" id="bPhoto" title="صورة"><span>📷</span></button><button class="hx" id="bDoorD"><span>🚪</span></button><button class="hx" id="bDoorP"><span>🚪</span></button><button class="hx" id="bOut" title="انزل من السيارة"><span>🚶</span></button></div>
 <div id="sigBar"><button class="dB" id="sigL">◀</button><button class="dB warn" id="haz">⚠</button><button class="dB" id="sigR">▶</button></div>
 <button class="dB warn" id="bHand">P<small>BRAKE</small></button>
-<div id="whl"><svg viewBox="0 0 200 200"><g><circle cx="100" cy="100" r="86" fill="none" stroke="#1a1c20" stroke-width="22"/><circle cx="100" cy="100" r="86" fill="none" stroke="#3a3e46" stroke-width="3" stroke-dasharray="2 5"/><path d="M26 112 A78 78 0 0 0 174 112" fill="none" stroke="#c9ccd2" stroke-width="7" stroke-linecap="round"/><path d="M100 14 l0 10" stroke="#e53935" stroke-width="6" stroke-linecap="round"/><path d="M22 104 L78 112 L100 128 L122 112 L178 104 L178 118 L128 134 L100 160 L72 134 L22 118 Z" fill="#23262b" stroke="#111" stroke-width="2"/><ellipse cx="100" cy="108" rx="30" ry="24" fill="#15171a" stroke="#555a63" stroke-width="2"/><text x="100" y="113" fill="#8f949c" font-size="11" text-anchor="middle" font-family="Arial">MAZDA</text></g></svg></div><div id="steerPad"><button id="steerLeft" aria-label="يسار">◀</button><button id="steerRight" aria-label="يمين">▶</button></div>
+<div id="whl"><svg viewBox="0 0 200 200"><g><circle cx="100" cy="100" r="86" fill="none" stroke="#1a1c20" stroke-width="22"/><circle cx="100" cy="100" r="86" fill="none" stroke="#3a3e46" stroke-width="3" stroke-dasharray="2 5"/><path d="M26 112 A78 78 0 0 0 174 112" fill="none" stroke="#c9ccd2" stroke-width="7" stroke-linecap="round"/><path d="M100 14 l0 10" stroke="#e53935" stroke-width="6" stroke-linecap="round"/><path d="M22 104 L78 112 L100 128 L122 112 L178 104 L178 118 L128 134 L100 160 L72 134 L22 118 Z" fill="#23262b" stroke="#111" stroke-width="2"/><ellipse cx="100" cy="108" rx="30" ry="24" fill="#15171a" stroke="#555a63" stroke-width="2"/><text x="100" y="113" fill="#8f949c" font-size="11" text-anchor="middle" font-family="Arial">MAZDA</text></g></svg></div>
 <button class="dB" id="bLight">💡</button><button class="dB" id="bHorn">📣</button>
 <div id="gears"><div id="gKnob"></div><div class="gl" data-g="P" style="top:0">P</div><div class="gl" data-g="R" style="top:36px">R</div><div class="gl" data-g="N" style="top:72px">N</div><div class="gl" data-g="D" style="top:108px">D</div></div>
 <div class="ped" id="pBrake">فرامل</div><div class="ped" id="pGas">بنزين</div></div>
@@ -400,9 +397,12 @@ hudUpd(){const q=id=>$(id);
  hold('bHorn',()=>CAR.hornOn(),()=>CAR.hornOff());
  const ped=(id,key)=>{const el=g$(id);hold(id,()=>{CAR[key]=1;el.classList.add('dn')},()=>{CAR[key]=0;el.classList.remove('dn')})};
  ped('pGas','gasT');ped('pBrake','brakeT');
- // أسهم التوجيه: ضغط مستمر لليمين أو اليسار
- const steer=(id,key)=>{const el=g$(id);const down=e=>{try{el.setPointerCapture(e.pointerId)}catch(_){}K[key]=1;e.preventDefault()};const up=()=>{K[key]=0};el.onpointerdown=down;el.onpointerup=el.onpointercancel=el.onlostpointercapture=up};
- steer('steerLeft','l');steer('steerRight','r');
+ // عجلة القيادة: اسحب بإصبعك لتدويرها
+ const w=g$('whl');let wid=null,last=0;
+ const ang=e=>{const r=w.getBoundingClientRect(),d=m2(e.clientX-(r.left+r.width/2),e.clientY-(r.top+r.height/2));return Math.atan2(d[1],d[0])*180/Math.PI};
+ w.onpointerdown=e=>{wid=e.pointerId;try{w.setPointerCapture(wid)}catch(_){}last=ang(e);CAR.whlHold=true;e.preventDefault()};
+ w.onpointermove=e=>{if(e.pointerId!==wid)return;const a=ang(e);let d=a-last;while(d>180)d-=360;while(d<-180)d+=360;last=a;CAR.whl=Math.max(-200,Math.min(200,CAR.whl+d))};
+ const wu=e=>{if(e.pointerId===wid){wid=null;CAR.whlHold=false}};w.onpointerup=w.onpointercancel=wu;
  addEventListener('wheel',e=>{if(DRV&&CAR.cam==='out')CAR.dist=Math.max(4,Math.min(16,CAR.dist+e.deltaY*.01))},{passive:true});
  // لوحة المفاتيح
  addEventListener('keydown',e=>{if(!DRV||e.repeat)return;switch(e.code){case'Space':CAR.toggleHand();e.preventDefault();break;case'KeyH':CAR.hornOn();break;case'KeyL':CAR.toggleLights();break;case'KeyC':case'KeyV':CAR.toggleCam();break;case'KeyF':CAR.toggleDoor('L');break;case'KeyG':CAR.toggleDoor('R');break;case'KeyQ':CAR.toggleSig(-1);break;case'KeyE':CAR.toggleSig(1);break;case'KeyX':CAR.toggleHaz();break;case'Digit1':CAR.setGear('P');break;case'Digit2':CAR.setGear('R');break;case'Digit3':CAR.setGear('N');break;case'Digit4':CAR.setGear('D');break}});
@@ -559,32 +559,7 @@ CAR.wh=wh;CAR.fw=fw;CAR.by=.81;CAR.bz=-.15;CAR.cx=.585;CAR.cz=1.36;CAR.cy=1.6;CA
 CAR.g.children.forEach(o=>{if(o.children[0]&&o.children[0].userData&&o.children[0].userData.cart){const k=o.children[0].userData.cart.slot;o.position.set(...CAR.sp(k))}});
 CAR.loaded=true;try{$('carD').textContent=''}catch(_){}}catch(e){console.log('truck model',e);toast('⚠ خطأ في تحميل السيارة: '+(e&&e.message||e))}};
 let carTry=0;function loadCar(){carTry++;try{new THREE.GLTFLoader().parse(b64($('carD').textContent.trim()).buffer,'',g=>carCb(g.scene),e=>{console.log(e);if(carTry<4)setTimeout(loadCar,1500);else toast('⚠ تعذّر تحميل السيارة')})}catch(e){console.log(e);if(carTry<4)setTimeout(loadCar,1500)}}
-// تحميل التكتك المرفق من ملف GLB محلي ليعمل دون إنترنت بعد التخزين المؤقت
-function loadTukTuk(){
- try{
-  new THREE.GLTFLoader().load(encodeURI('مجسم زنجيشن.glb'),g=>{
-   try{
-    const model=g.scene;
-    model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>{if(m.metalness!==undefined)m.metalness=Math.min(m.metalness,.15);if(m.roughness!==undefined)m.roughness=Math.max(m.roughness,.55);if(m.side!==undefined)m.side=THREE.DoubleSide})}});
-    const bb=new THREE.Box3().setFromObject(model),sz=bb.getSize(new THREE.Vector3()),ct=bb.getCenter(new THREE.Vector3());
-    model.position.sub(ct);const scale=3.8/Math.max(sz.z,sz.x,sz.y);model.scale.setScalar(scale);
-    const b2=new THREE.Box3().setFromObject(model);model.position.y-=b2.min.y-.08;
-    CAR.g.children.slice().forEach(o=>{if(!(o.children[0]&&o.children[0].userData&&o.children[0].userData.cart))CAR.g.remove(o)});
-    CAR.g.add(model);
-    const rack=new THREE.Group();rack.position.set(0,.83,-.72);CAR.g.add(rack);
-    const mat=new THREE.MeshLambertMaterial({color:0x48545b});
-    const floor=new THREE.Mesh(new THREE.BoxGeometry(1.65,.12,2.05),mat);floor.position.set(0,0,-.15);rack.add(floor);
-    [[0,.34,-1.15,1.65,.68,.1],[0,.34,.85,1.65,.68,.1],[-.78,.34,-.15,.1,.68,2],[.78,.34,-.15,.1,.68,2]].forEach(a=>{const m=new THREE.Mesh(new THREE.BoxGeometry(a[3],a[4],a[5]),mat);m.position.set(a[0],a[1],a[2]);rack.add(m)});
-    CAR.by=.99;CAR.bz=-.78;CAR.ex=1.25;CAR.hitD=[-1.2,-.6,0,.6,1.2];CAR.hitR=.9;CAR.cx=0;CAR.cz=.82;CAR.cy=1.25;
-    ['L','R'].forEach(k=>{const pivot=new THREE.Group();pivot.position.set(k==='L'?.8:-.8,.6,0);CAR.g.add(pivot);CAR.door[k].p=pivot;CAR.door[k].a=CAR.door[k].t=1;CAR.door[k].dir=k==='L'?-1:1});
-    CAR.ok=true;CAR.extras();
-    [model,rack].forEach(o=>o.traverse(x=>{if(x.isMesh){x.userData.car=1;CARM.push(x)}}));
-    CAR.loaded=true;toast('🛺 التكتك جاهز! افتح الباب وابدأ القيادة');
-   }catch(e){console.log('tuk setup',e);toast('⚠ تعذّر تجهيز التكتك')}
-  },undefined,e=>{console.log('tuk load',e);toast('⚠ تعذّر تحميل مجسم التكتك')});
- }catch(e){console.log('tuk loader',e)}
-}
-loadTukTuk();
+loadCar();setTimeout(function chk(){if(!CAR.loaded&&carTry<4){loadCar();setTimeout(chk,9000)}},9000);
 function bike(){if(!MOP)return bikeP();const w=new THREE.Group(),m=MOP.clone(true),Sc=.4025;m.scale.setScalar(Sc);m.rotation.y=Math.PI/2;m.position.set(0,1.184*Sc,.819*Sc);w.add(m);
 const ws=['Front_Tire','Back_Tire','Front_Rim','Back_Rim','Front_Tire_Screw','Back_Tire_Screw'].map(n=>{const o=m.getObjectByName(n);return o&&o.children[0]}).filter(Boolean);
 return{g:w,w:[],sp:a=>ws.forEach(o=>o.rotation.z+=a)}}
@@ -904,7 +879,7 @@ function staffUpdate(dt){
  EMPS.slice().forEach(e=>eUpd(e,dt))}
 
 // ===== الإعدادات: رفع صوت مخصص + فحص التحديثات =====
-const APP_VER='1.4.0';
+const APP_VER='1.3.0';
 const SETS=(()=>{try{return JSON.parse(localStorage.getItem('dk_set')||'{}')}catch(e){return{}}})();
 Object.assign(AUD.vol,SETS.vol||{});SETS.names=SETS.names||{};
 const saveSets=()=>{try{localStorage.setItem('dk_set',JSON.stringify({vol:AUD.vol,names:SETS.names}))}catch(e){}};

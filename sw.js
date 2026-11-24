@@ -1,8 +1,7 @@
 // دكان الحلة — تشغيل بدون إنترنت
-const VER = '1.4.0';
+const VER = '1.3.0';
 const CACHE = 'dukkan-' + VER;
 const IDX = new URL('index.html', self.registration.scope).href;
-const TUK = new URL('مجسم زنجيشن.glb', self.registration.scope).href;
 const LIBS = [
   'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
   'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js'
@@ -12,7 +11,6 @@ self.addEventListener('install', e => {
     const c = await caches.open(CACHE);
     await Promise.all(LIBS.map(u => fetch(u, { mode: 'no-cors' }).then(r => c.put(u, r)).catch(() => {})));
     try { const r = await fetch(IDX, { cache: 'reload' }); if (r.ok) await c.put(IDX, r); } catch (_) {}
-    try { const r = await fetch(TUK, { cache: 'reload' }); if (r.ok) await c.put(TUK, r); } catch (_) {}
     self.skipWaiting();
   })());
 });
