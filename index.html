@@ -668,7 +668,7 @@ $('bSit').onclick=()=>{if(SIT){const s=SIT;SIT=null;$('bSit').textContent='🪑'
 let m=null,bd=2.4;MV.forEach(c=>{if(!c.fr){const d=Math.hypot(P.x-c.g.position.x,P.z-c.g.position.z);if(d<bd){bd=d;m=c}}});SIT={h:.95,px:P.x,pz:P.z};
 if(m){const f=chairFront(m);SIT.m=m;SIT.h=1.2;P.x=m.g.position.x;P.z=m.g.position.z;P.yaw=Math.atan2(-f[0],-f[1]);P.pitch=0}$('bSit').textContent='🧍'};
 $('mDist').onclick=distribute;
-function enterCar(){if(HELD||HCART||HCAN!=null)return toast('أنزل ما في يدك أولاً');if(CAR.door.L.t<.5)return toast('🚪 افتح باب السائق أولاً (وجّه النقطة على الباب)');if(SIT)$('bSit').onclick();DRV=CAR;HEAD=0;P.pitch=0;CAR.enter();app.classList.add('drv');toast('🚗 حرّك الجير إلى D ثم اضغط البنزين — واغلق الباب 🚪')}
+function enterCar(){if(HELD||HCART||HCAN!=null)return toast('أنزل ما في يدك أولاً');if(CAR.door.L.t<.5)return toast('🚪 افتح باب السائق أولاً (وجّه النقطة على الباب)');if(SIT)$('bSit').onclick();DRV=CAR;switchStaffVehicle(CAR);HEAD=0;P.pitch=0;CAR.enter();app.classList.add('drv');toast('🚗 حرّك الجير إلى D ثم اضغط البنزين — واغلق الباب 🚪')}
 function exitCar(){const c=CAR,s=Math.sin(c.hd),co=Math.cos(c.hd);if(Math.abs(c.v)>1.2)return toast('🛑 أوقف السيارة أولاً');CAR.leave();c.door.L.t=1;DRV=null;c.v=0;app.classList.remove('drv');for(const k of[1.9,-1.9,2.8,-2.8]){const x=c.g.position.x+co*k,z=c.g.position.z-s*k;if(!blocked(x,z)){P.x=x;P.z=z;break}}{const lx=(P.x-c.g.position.x)*co-(P.z-c.g.position.z)*s;P.yaw=c.hd+(lx<0?-1:1)*Math.PI/2}camY=1.7;P.pitch=0}
 function ctx(){if(DRV)return{t:'exit',v:'Exit',nm:(TUKV&&DRV===TUKV)?'التكتك':'السيارة'};
 if(HELD)return{t:'drop',v:'Drop',nm:HELD.bad?'⛔ المكان مشغول':(HELD.fr?'ثلاجة':'كرسي')};
@@ -791,6 +791,34 @@ const RAIL=1.19,FLR=.81,SL=[];
 function slotOf(i){const b=SL[i%SL.length],L=Math.floor(i/SL.length);return L?Object.assign({},b,{h:b.h+.45*L}):b}
 const stk=()=>.27*Math.ceil(CAR.slots.filter(Boolean).length/12);
 function slotY(sp){return sp.m==='sit'?sp.h-.86:sp.m==='sitf'?sp.h-.82:sp.h+(sp.top?stk():0)}
+// عمال التحميل يتبعون آخر مركبة ركبها اللاعب: السيارة أو التكتك.
+let STAFF_VEH=CAR;
+function staffVehicle(){return STAFF_VEH||CAR}
+function staffSlots(v){return (v&&v!==CAR&&v.slots)?v.slots:CAR.slots}
+function staffWorld(v,lx,lz){v=v||CAR;const p=v.g.position,h=v.hd,s=Math.sin(h),c=Math.cos(h);return[p.x+c*lx+s*lz,p.z-s*lx+c*lz]}
+function staffApproach(v){return staffWorld(v,0,v===CAR?-3.45:-1.25)}
+function staffSeatSpot(v,i){
+ if(v===CAR)return slotOf(i);
+ const spots=[[-.29,.72,-.43,Math.PI/2],[.29,.72,-.43,-Math.PI/2],[-.29,.72,.40,Math.PI/2],[.29,.72,.40,-Math.PI/2]];
+ const a=spots[i%spots.length],layer=Math.floor(i/spots.length);
+ return{m:'sit',x:a[0],y:a[1]+layer*.22,z:a[2],yaw:a[3]};
+}
+function staffSeatY(v,sp){return v===CAR?slotY(sp):sp.y}
+function switchStaffVehicle(v){
+ if(!v)return;STAFF_VEH=v;
+ const riders=EMPS.filter(e=>e.hired&&e.role==='load');
+ let used=EMPS.filter(e=>e.hired&&e.role==='load'&&e.seatTaken&&e.veh===v).map(e=>e.seat);
+ riders.forEach(e=>{
+  if(e.st==='ride'&&e.seated&&e.veh!==v){
+   if(e.veh&&e.veh.g)e.veh.g.remove(e.g);
+   let i=0;while(used.includes(i))i++;used.push(i);
+   e.veh=v;e.seat=i;e.seatTaken=true;v.g.add(e.g);
+   const sp=staffSeatSpot(v,i);e.g.position.set(sp.x,staffSeatY(v,sp),sp.z);e.g.rotation.set(0,sp.yaw||0,0);e.mode=sp.m;
+  }else if(e.st==='toCar'){
+   e.veh=v;e.path=[staffApproach(v)];
+  }
+ });
+}
 const normA=a=>{while(a>Math.PI)a-=2*Math.PI;while(a<-Math.PI)a+=2*Math.PI;return a};
 function eWalk(e,dt){const w=e.path&&e.path[0];if(!w){e.mode='idle';return true}
  const p=e.g.position,dx=w[0]-p.x,dz=w[1]-p.z,d=Math.hypot(dx,dz);
@@ -798,12 +826,19 @@ function eWalk(e,dt){const w=e.path&&e.path[0];if(!w){e.mode='idle';return true}
  const s=Math.min(d,e.sp*(e.carry?.85:1)*dt);p.x+=dx/d*s;p.z+=dz/d*s;e.g.rotation.y=Math.atan2(dx,dz);e.mode='walk';return false}
 const gy=()=>-CAR.g.position.y;
 function hopTo(e,a,b,d,done){e.hop={t:0,d,a,b,done};e.st='climb'}
-function startBoard(e){const used=EMPS.filter(x=>x.seatTaken).map(x=>x.seat);let i=0;while(used.includes(i))i++;e.seat=i;e.seatTaken=true;CAR.g.add(e.g);e.g.rotation.set(0,0,0);
- const sp=slotOf(i),a=[0,gy(),-3.45],b=[sp.x,slotY(sp),sp.z];
- hopTo(e,a,b,.9+.16*Math.hypot(b[0]-a[0],b[2]-a[2]),()=>{e.seated=true;e.g.rotation.y=sp.yaw;e.mode=sp.m;e.st='ride'});e.hop.r0=0;e.hop.r1=normA(sp.yaw)}
-function alight(e,after){const sp=slotOf(e.seat||0),p=e.g.position,b=[0,gy(),-3.45];
+function startBoard(e,v){
+ v=v||e.veh||staffVehicle();e.veh=v;
+ const used=EMPS.filter(x=>x!==e&&x.seatTaken&&x.veh===v).map(x=>x.seat);let i=0;while(used.includes(i))i++;
+ e.seat=i;e.seatTaken=true;v.g.add(e.g);e.g.rotation.set(0,0,0);
+ const sp=staffSeatSpot(v,i),a=[0,-v.g.position.y,v===CAR?-3.45:-1.25],b=[sp.x,staffSeatY(v,sp),sp.z];
+ hopTo(e,a,b,.9+.16*Math.hypot(b[0]-a[0],b[2]-a[2]),()=>{e.seated=true;e.g.rotation.y=sp.yaw||0;e.mode=sp.m;e.st='ride'});e.hop.r0=0;e.hop.r1=normA(sp.yaw||0)}
+function alight(e,after){
+ const v=e.veh||staffVehicle(),p=e.g.position,b=[0,-v.g.position.y,v===CAR?-3.45:-1.25];
  hopTo(e,[p.x,p.y,p.z],b,.9+.16*Math.hypot(b[0]-p.x,b[2]-p.z),()=>{unseat(e);after()});e.hop.r0=e.g.rotation.y;e.hop.r1=Math.PI}
-function unseat(e){const i=e.seat||0,p=cw(((i%3)-1)*.45,-3.5);e.seated=false;e.seatTaken=false;e.hop=null;S.add(e.g);e.g.position.set(p[0],0,p[1]);e.g.rotation.y=CAR.hd+Math.PI;e.mode='idle'}
+function unseat(e){
+ const v=e.veh||staffVehicle(),i=e.seat||0,local=v===CAR? [((i%3)-1)*.45,-3.5]:[i%2? .85:-.85,-1.25],p=staffWorld(v,local[0],local[1]);
+ e.seated=false;e.seatTaken=false;e.hop=null;S.add(e.g);e.g.position.set(p[0],0,p[1]);e.g.rotation.y=v.hd+Math.PI;e.mode='idle'
+}
 function fridgeFor(t){return FRS.find(f=>f.slots.includes(t)&&f.slots.includes(-1))||FRS.find(f=>f.slots.includes(-1))||FRS[0]}
 function leavePath(e){const p=e.g.position,inside=Math.abs(p.x)<6&&p.z<5.2&&p.z>-5&&Math.abs(p.x)<6;e.path=(inside?[[0,4.4],[0,7.4]]:[]).concat([[p.x<-10?p.x:-14,9.6],[-75,9.6]]);e.st='leaving'}
 function fire(e,why){if(!e.hired)return;
@@ -811,7 +846,7 @@ function fire(e,why){if(!e.hired)return;
  if(e.carry){const o=e.carry;e.g.remove(o.g);o.st='floor';cartPlace(o,e.g.position.x,-.04,e.g.position.z,0);e.carry=null}
  if(e.seated||e.seatTaken)unseat(e);
  e.hired=false;e.mode='idle';leavePath(e);toast(why||('🚫 طردت '+e.name));beep(220,.15)}
-function statusT(e){const n={climb:'يتسلّق الصندوق',toCar:'رايح للسيارة',open:'بيركب السيارة',ride:'جالس في صندوق السيارة 🚚',exit:'نزل من السيارة',toBed:'يجيب كرتونة من الصندوق',take:'يجيب كرتونة',deliver:'يوصّل الكرتونة للثلاجة',drop:'يفرّغ في الثلاجة',back:'راجع للسيارة',toShop:'رايح للدكان',work:'على الكاشير',lExit:'نزل للتحميل',lGo:'رايح سوق الجملة',lPick:'يشيل كرتونة',lBring:'يحمّل الصندوق',lBack:'راجع للسيارة'};return(n[e.st]||'')+(e.role==='load'&&e.done?' · نزّل '+e.done:'')+(e.role==='cash'&&e.served?' · خدم '+e.served+' زبون':'')}
+function statusT(e){const n={climb:'يتسلّق الصندوق',toCar:'رايح للسيارة',open:'بيركب السيارة',ride:'راكب معك في المركبة 🚚',exit:'نزل من السيارة',toBed:'يجيب كرتونة من الصندوق',take:'يجيب كرتونة',deliver:'يوصّل الكرتونة للثلاجة',drop:'يفرّغ في الثلاجة',back:'راجع للسيارة',toShop:'رايح للدكان',work:'على الكاشير',lExit:'نزل للتحميل',lGo:'رايح سوق الجملة',lPick:'يشيل كرتونة',lBring:'يحمّل الصندوق',lBack:'راجع للسيارة'};return(n[e.st]||'')+(e.role==='load'&&e.done?' · نزّل '+e.done:'')+(e.role==='cash'&&e.served?' · خدم '+e.served+' زبون':'')}
 function mkCand(role){const nm=pick(NAMES1)+' '+pick(NAMES2);const r=Math.random()*3|0;
  if(role==='load'){const st=r+1;return{role,name:nm,stars:st,sp:2.5+st*.5,base:6+st*3,per:2+st}}
  const st=r+1;return{role,name:nm,stars:st,sec:[0,5,3.4,2.2][st],err:[0,.16,.08,.02][st],price:100}}
@@ -821,7 +856,7 @@ const starS=n=>'⭐'.repeat(n);
 function renderStaff(){const L=EMPS.filter(e=>e.hired);
  let h='<h4 style="margin:8px 0 2px">👥 موظفوك</h4>'+(L.length?L.map(e=>`<div class="row"><span style="font-size:24px">${e.role==='cash'?'🛒':'📦'}</span><b>${e.name}<br><small>${e.role==='cash'?'كاشير':'عامل تحميل'} · ${statusT(e)}</small></b>${e.role==='cash'?`<button data-s="${e.id}" style="background:#2e8b57">بيع +${Math.round((e.price||0)*.6)} ج</button>`:`<button data-f="${e.id}" style="background:#c0392b">طرد</button>`}</div>`).join(''):'<div style="opacity:.8;padding:6px 0;font-size:14px">ما عندك موظفين الآن</div>');
  if(STF.office)h+='<h4 style="margin:12px 0 2px">🧑‍💼 مرشحون للتوظيف</h4><div class="row"><span style="font-size:24px">📦</span><b>توظيف سريع — عمال تحميل<br><small>بدون حد · الأجر بعد التنزيل</small></b><button class="g" data-q="1">+1</button><button class="g" data-q="5">+5</button><button class="g" data-q="10">+10</button></div>'+(CANDS.length?CANDS.map((c,i)=>`<div class="row"><span style="font-size:24px">${c.role==='cash'?'🛒':'📦'}</span><b>${c.name}<br><small>${c.role==='cash'?'كاشير · سعر الشراء '+c.price+' ج · سرعة '+starS(c.stars)+' · دقة '+starS(c.stars):'عامل تحميل · '+c.base+' ج + '+c.per+' ج لكل كرتونة · قوة '+starS(c.stars)}</small></b><button class="g" data-h="${i}">${c.role==='cash'?'شراء':'تعيين'}</button></div>`).join(''):'<div style="opacity:.8;padding:6px 0;font-size:14px">لا يوجد مرشحون الآن — ارجع بكرة</div>');
- h+='<p style="font-size:12px;opacity:.8;margin:10px 0 0">📦 عامل التحميل يركب جالساً في صندوق السيارة: عند سوق الجملة اضغط 📋 ليجيب لك الكراتين ويحمّلها، وقرب الدكان ينزّلها في الثلاجات ثم يأخذ أجره ويمشي. 🛒 تقدر تشتري كاشيرين (واحد قدّام كل مكان في الكاونتر) ويحاسبون الزبائن بدالك، وتبيعهم بـ 60% من سعر الشراء. عدد عمال التحميل حر.</p>';
+ h+='<p style="font-size:12px;opacity:.8;margin:10px 0 0">📦 عامل التحميل يركب معك في السيارة أو التكتك حسب المركبة التي تستخدمها: عند سوق الجملة اضغط 📋 ليجيب الكراتين ويحمّلها في صندوق مركبتك، وقرب الدكان ينزّلها في الثلاجات ثم يأخذ أجره ويمشي. 🛒 تقدر تشتري كاشيرين (واحد قدّام كل مكان في الكاونتر) ويحاسبون الزبائن بدالك، وتبيعهم بـ 60% من سعر الشراء. عدد عمال التحميل حر.</p>';
  $('stList').innerHTML=h;
  $('stList').querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{const e=EMPS.find(x=>x.id==b.dataset.f);if(e)fire(e);renderStaff()});
  $('stList').querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{const e=EMPS.find(x=>x.id==b.dataset.s);if(e){const v=Math.round((e.price||0)*.6);money+=v;fire(e,'💰 بعت '+e.name+' بـ '+v+' ج')}renderStaff()});
@@ -836,7 +871,7 @@ function hire(i){const c=CANDS[i];if(!c)return;const cur=EMPS.filter(e=>e.hired)
  if(c.role==='cash'){if(money<c.price)return toast('الفلوس ما كفاية — السعر '+c.price+' ج');money-=c.price}
  const e=mkEmp(c.role,{name:c.name,hired:true,sp:c.role==='load'?c.sp:3.2,base:c.base,per:c.per,sec:c.sec,err:c.err,price:c.price,stars:c.stars});
  e.g.position.set(OX+(Math.random()-.5)*1.2,0,OZ+1.9);e.g.rotation.y=0;
- e.st='toCar';if(c.role==='cash'){e.slot=freeSlot();const p0=POST[e.slot];e.g.position.set(p0[0],0,p0[1]);e.g.rotation.y=Math.PI;e.st='work';if(e.slot===1)addDesk()}
+ e.veh=STAFF_VEH;e.st='toCar';if(c.role==='cash'){e.slot=freeSlot();const p0=POST[e.slot];e.g.position.set(p0[0],0,p0[1]);e.g.rotation.y=Math.PI;e.st='work';if(e.slot===1)addDesk()}
  CANDS.splice(i,1);CANDS.push(mkCand(c.role));beep(900,.08);toast(c.role==='cash'?('🛒 اشتريت الكاشير '+c.name+' — نزل في الدكان'):('✅ تم تعيين '+c.name+' عامل تحميل'))}
 function payDaily(){genCands()}
 // ---------- تحديث الموظفين ----------
@@ -852,15 +887,15 @@ function cashUpd(e,dt){const PC=(typeof pc!=='undefined'&&pc)?pc.c:null;
  else e.mode='idle'}
 function eUpd(e,dt){e.t+=dt;
  switch(e.st){
- case'toCar':{if(Math.abs(CAR.v)>.5){e.mode='idle';break}e.path=[cw(0,-3.45)];if(eWalk(e,dt)){startBoard(e);e.g.rotation.y=0}break}
-  case'ride':{const sp=slotOf(e.seat||0);e.mode=sp.m;e.g.position.y+=(slotY(sp)-e.g.position.y)*Math.min(1,dt*5);break}
+ case'toCar':{const v=e.veh||staffVehicle();if(Math.abs(v.v)>.5){e.mode='idle';break}e.path=[staffApproach(v)];if(eWalk(e,dt)){startBoard(e,v);e.g.rotation.y=0}break}
+  case'ride':{const v=e.veh||staffVehicle(),sp=staffSeatSpot(v,e.seat||0);e.mode=sp.m;e.g.position.y+=(staffSeatY(v,sp)-e.g.position.y)*Math.min(1,dt*5);break}
  case'climb':{const h=e.hop;if(!h){e.st='ride';break}h.t+=dt;const p=Math.min(1,h.t/h.d),q=p*p*(3-2*p);e.g.position.set(h.a[0]+(h.b[0]-h.a[0])*q,h.a[1]+(h.b[1]-h.a[1])*q+.28*Math.sin(Math.PI*p),h.a[2]+(h.b[2]-h.a[2])*q);if(h.r0!=null)e.g.rotation.y=h.r0+normA(h.r1-h.r0)*q;e.mode='climb';if(p>=1){e.mode='idle';const f=h.done;e.hop=null;f()}break}
- case'exit':e.wt-=dt;if(e.wt<=0)alight(e,()=>{e.st='toBed';e.path=[cw(0,-3.35)]});break;
+ case'exit':e.wt-=dt;if(e.wt<=0)alight(e,()=>{const v=e.veh||staffVehicle();e.st='toBed';e.path=[staffWorld(v,0,v===CAR?-3.35:-1.05)]});break;
  case'toBed':if(eWalk(e,dt))e.st='take';break;
- case'take':{let k=-1;for(let i=CAR.slots.length-1;i>=0;i--)if(CAR.slots[i]){k=i;break}
+ case'take':{const v=e.veh||staffVehicle(),slots=staffSlots(v);let k=-1;for(let i=slots.length-1;i>=0;i--)if(slots[i]){k=i;break}
   if(k<0){e.st=e.done>0?'pay':'toCar';break}
-  const o=CAR.slots[k];CAR.slots[k]=null;cartRemove(o);o.st='npc';e.g.add(o.g);o.g.position.set(0,1.04,.52);o.g.rotation.set(0,0,0);e.carry=o;e.tf=fridgeFor(o.t);
-  e.path=[cw(1.8,-3.3),[0,7.4],[0,4.3],standOf(e.tf)];e.st='deliver';break}
+  const o=slots[k];slots[k]=null;cartRemove(o);o.st='npc';e.g.add(o.g);o.g.position.set(0,1.04,.52);o.g.rotation.set(0,0,0);e.carry=o;e.tf=fridgeFor(o.t);
+  const near=staffWorld(v,1.8,v===CAR?-3.3:-1.05);e.path=[near,[0,7.4],[0,4.3],standOf(e.tf)];e.st='deliver';break}
  case'deliver':if(eWalk(e,dt)){e.st='drop';e.wt=1;e.g.rotation.y=e.tf.g.rotation.y+Math.PI}break;
  case'drop':e.wt-=dt;if(e.wt<=0){const o=e.carry,f=e.tf;let n=o.n;
   while(n>0&&f.slots.includes(-1)){f.slots[f.slots.indexOf(-1)]=o.t;n--}
@@ -868,46 +903,47 @@ function eUpd(e,dt){e.t+=dt;
   FRS.forEach(x=>{if(x.dirty){x.dirty=0;refresh(x)}});refresh(f);
   e.g.remove(o.g);e.carry=null;e.done++;beep(700,.04);
   e.path=[[0,4.3],[0,7.4]];e.st='back'}break;
- case'back':if(eWalk(e,dt)){e.st='toBed';e.path=[cw(1.8,-3.3),cw(0,-3.35)]}break;
+ case'back':if(eWalk(e,dt)){const v=e.veh||staffVehicle();e.st='toBed';e.path=[staffWorld(v,1.8,v===CAR?-3.3:-1.05),staffWorld(v,0,v===CAR?-3.35:-1.25)]}break;
  case'pay':{const due=e.done?e.base+e.per*e.done:0,paid=Math.min(due,money);money-=paid;e.hired=false;
   PAYT.s+=paid;PAYT.n+=due?1:0;PAYT.t=performance.now();if(paid<due)PAYT.short=true;
   if(due)beep(1100,.1);e.st='wave';e.wt=1.4;e.mode='wave';break}
  case'wave':e.wt-=dt;e.mode='wave';if(e.wt<=0){leavePath(e)}break;
  case'lExit':e.wt-=dt;if(e.wt<=0)alight(e,()=>{e.st='lGo'});break;
- case'lGo':{if(!ORD.length){e.st='lBack';e.path=[cw(0,-3.35)];break}
-  e.want=ORD.shift();const pz=STZ-3.15+e.want*.9;e.path=[cw(-1.8,-3.3),[STX-7.5,pz],[STX+4,pz]];e.st='lPick';break}
+ case'lGo':{const v=e.veh||staffVehicle();if(!ORD.length){e.st='lBack';e.path=[staffWorld(v,0,v===CAR?-3.35:-1.25)];break}
+  e.want=ORD.shift();const pz=STZ-3.15+e.want*.9;e.path=[staffWorld(v,-1.8,v===CAR?-3.3:-1.05),[STX-7.5,pz],[STX+4,pz]];e.st='lPick';break}
  case'lPick':if(eWalk(e,dt)){e.wt=.8;e.st='lGrab';e.g.rotation.y=Math.PI/2}break;
- case'lGrab':e.wt-=dt;if(e.wt<=0){const o=mkCart(e.want,10);o.st='npc';e.g.add(o.g);o.g.position.set(0,1.04,.52);o.g.rotation.set(0,0,0);e.carry=o;const pz=STZ-3.15+e.want*.9;e.path=[[STX+4,pz],[STX-7.5,pz],cw(-1.8,-3.3),cw(0,-3.35)];e.st='lBring'}break;
- case'lBring':if(eWalk(e,dt)){const o=e.carry,k=CAR.slots.indexOf(null);e.g.remove(o.g);e.carry=null;
-  if(k<0){o.st='floor';cartPlace(o,e.g.position.x,-.04,e.g.position.z,0)}else{CAR.slots[k]=o;o.st='bed';o.slot=k;CAR.g.add(o.g);o.g.position.set(...CAR.sp(k));o.g.rotation.set(0,0,0);if(!CARTM.includes(o.m))CARTM.push(o.m)}
+ case'lGrab':e.wt-=dt;if(e.wt<=0){const o=mkCart(e.want,10);o.st='npc';e.g.add(o.g);o.g.position.set(0,1.04,.52);o.g.rotation.set(0,0,0);e.carry=o;const v=e.veh||staffVehicle(),pz=STZ-3.15+e.want*.9;e.path=[[STX+4,pz],[STX-7.5,pz],staffWorld(v,-1.8,v===CAR?-3.3:-1.05),staffWorld(v,0,v===CAR?-3.35:-1.25)];e.st='lBring'}break;
+ case'lBring':if(eWalk(e,dt)){const v=e.veh||staffVehicle(),slots=staffSlots(v),o=e.carry,k=slots.indexOf(null);e.g.remove(o.g);e.carry=null;
+  if(k<0){o.st='floor';cartPlace(o,e.g.position.x,-.04,e.g.position.z,0)}else{slots[k]=o;o.st='bed';o.slot=k;v.g.add(o.g);o.g.position.set(...v.sp(k));o.g.rotation.set(0,v===CAR?0:Math.PI/2,0);if(!CARTM.includes(o.m))CARTM.push(o.m)}
   beep(700,.04);e.done2=(e.done2||0)+1;e.st='lGo'}break;
- case'lBack':if(eWalk(e,dt))e.st='toCar';break;
+ case'lBack':if(eWalk(e,dt)){if(STAFF_VEH&&e.veh!==STAFF_VEH)e.veh=STAFF_VEH;e.st='toCar'}break;
  case'toShop':if(eWalk(e,dt)){e.st='work';e.g.rotation.y=Math.PI}break;
  case'work':cashUpd(e,dt);break;
  case'leaving':if(eWalk(e,dt)){S.remove(e.g);EMPS.splice(EMPS.indexOf(e),1)}break;
  case'clerk':e.mode=(e.t%9>7.3)?'wave':'idle';break}
  ePose(e,dt)}
-function orderFree(){return CAR.slots.filter(x=>!x).length-ORD.length}
+function orderFree(){return staffSlots(staffVehicle()).filter(x=>!x).length-ORD.length}
 const ordTot=()=>ORD.reduce((a,t)=>a+ITEMS[t].c*10,0);
 function renderOrder(){const cnt=ITEMS.map((_,i)=>ORD.filter(t=>t===i).length);
- $('oList').innerHTML=ITEMS.map((o,i)=>`<div class="row"><span style="font-size:24px">${o.e}</span><b>${o.n}<br><small>الكرتونة ${o.c*10} ج · في الطلب: ${cnt[i]}</small></b><button data-a="${i}">+</button><button data-r="${i}" style="background:#6b5a4a">−</button></div>`).join('')+`<div style="margin:8px 0;font-size:14px">الإجمالي: ${ordTot()} ج · أماكن فاضية في الصندوق: ${orderFree()}</div>`;
- $('oList').querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{if(orderFree()<=0)toast('صندوق السيارة ممتلئ');else ORD.push(+b.dataset.a);renderOrder()});
+ $('oList').innerHTML=ITEMS.map((o,i)=>`<div class="row"><span style="font-size:24px">${o.e}</span><b>${o.n}<br><small>الكرتونة ${o.c*10} ج · في الطلب: ${cnt[i]}</small></b><button data-a="${i}">+</button><button data-r="${i}" style="background:#6b5a4a">−</button></div>`).join('')+`<div style="margin:8px 0;font-size:14px">الإجمالي: ${ordTot()} ج · أماكن فاضية في صندوق ${staffVehicle()===CAR?'السيارة':'التكتك'}: ${orderFree()}</div>`;
+ $('oList').querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{if(orderFree()<=0)toast('الصندوق ممتلئ');else ORD.push(+b.dataset.a);renderOrder()});
  $('oList').querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{const i=ORD.lastIndexOf(+b.dataset.r);if(i>=0)ORD.splice(i,1);renderOrder()})}
 $('bOrder').onclick=()=>{ORD=[];renderOrder();$('order').style.display='flex'};$('oClose').onclick=()=>{ORD=[];$('order').style.display='none'};
 $('oGo').onclick=()=>{if(!ORD.length)return toast('اختر كراتين أولاً');const t=ordTot();if(money<t)return toast('الفلوس ما كفاية ('+t+' ج)');
- const rd=EMPS.filter(e=>e.hired&&e.role==='load'&&e.st==='ride');if(!rd.length)return;money-=t;LOADING=true;rd.slice(0,ORD.length).forEach((e,i)=>{e.st='lExit';e.wt=.3+i*.22});$('order').style.display='none';toast('👷 العمال راحوا يجيبوا البضاعة — دفعت '+t+' ج')};
+ const v=staffVehicle(),rd=EMPS.filter(e=>e.hired&&e.role==='load'&&e.st==='ride'&&e.veh===v);if(!rd.length)return toast('العمال لم يركبوا هذه المركبة بعد');money-=t;LOADING=true;rd.slice(0,ORD.length).forEach((e,i)=>{e.veh=v;e.st='lExit';e.wt=.3+i*.22});$('order').style.display='none';toast('👷 العمال راحوا يجيبوا البضاعة — '+(v===CAR?'السيارة':'التكتك')+' — دفعت '+t+' ج')};
 function staffUpdate(dt){
  if(PAYT.n&&performance.now()-PAYT.t>900){toast('💵 دفعت '+PAYT.s+' ج لـ '+PAYT.n+(PAYT.n>1?' عمال':' عامل')+(PAYT.short?' — الفلوس ما كفت':'')+' · شكراً ويرحم والديك');beep(1100,.1);PAYT.s=PAYT.n=0;PAYT.short=false}
- {const rd=EMPS.filter(e=>e.hired&&e.role==='load'&&e.st==='ride'),nearW=Math.hypot(CAR.g.position.x-STX,CAR.g.position.z-STZ)<24&&Math.abs(CAR.v)<.3,show=rd.length>0&&nearW&&!DRV&&!LOADING;
+ const v=staffVehicle(),slots=staffSlots(v);
+ {const rd=EMPS.filter(e=>e.hired&&e.role==='load'&&e.st==='ride'&&e.veh===v),nearW=Math.hypot(v.g.position.x-STX,v.g.position.z-STZ)<24&&Math.abs(v.v)<.3,show=rd.length>0&&nearW&&!DRV&&!LOADING;
   $('bOrder').style.display=show?'flex':'none';if(show&&!HINTW){HINTW=true;toast('📋 اضغط زر 📋 لتطلب من العمال تحميل البضاعة')}if(!nearW)HINTW=false;
   if(LOADING&&!ORD.length&&!EMPS.some(e=>/^l(Exit|Go|Pick|Grab|Bring|Back)$/.test(e.st))){LOADING=false}}
- const riders=EMPS.filter(e=>e.hired&&e.role==='load'&&e.st==='ride');
- if(riders.length&&!LOADING&&Math.abs(CAR.v)<.3&&Math.hypot(CAR.g.position.x,CAR.g.position.z-8)<30&&CAR.slots.some(Boolean)){UNL+=dt;
-  if(UNL>1.3){UNL=0;riders.slice(0,Math.max(1,CAR.slots.filter(Boolean).length)).forEach((e,i)=>{e.st='exit';e.wt=.3+i*.22});toast('👷 العمال بدأوا ينزّلوا البضاعة')}}else UNL=0;
+ const riders=EMPS.filter(e=>e.hired&&e.role==='load'&&e.st==='ride'&&e.veh===v);
+ if(riders.length&&!LOADING&&Math.abs(v.v)<.3&&Math.hypot(v.g.position.x,v.g.position.z-8)<30&&slots.some(Boolean)){UNL+=dt;
+  if(UNL>1.3){UNL=0;riders.slice(0,Math.max(1,slots.filter(Boolean).length)).forEach((e,i)=>{e.st='exit';e.wt=.3+i*.22});toast('👷 العمال بدأوا ينزّلوا البضاعة')}}else UNL=0;
  EMPS.slice().forEach(e=>eUpd(e,dt))}
 
 // ===== الإعدادات: رفع صوت مخصص + فحص التحديثات =====
-const APP_VER='1.5.0';
+const APP_VER='1.6.0';
 const SETS=(()=>{try{return JSON.parse(localStorage.getItem('dk_set')||'{}')}catch(e){return{}}})();
 Object.assign(AUD.vol,SETS.vol||{});SETS.names=SETS.names||{};
 const saveSets=()=>{try{localStorage.setItem('dk_set',JSON.stringify({vol:AUD.vol,names:SETS.names}))}catch(e){}};
@@ -998,7 +1034,7 @@ function restoreStaff(n){if(staffRestored)return;if(!EM.ok&&!EM.failed&&n<120)re
  try{(SAVED.staff||[]).forEach(r=>{const e=mkEmp(r.role,{name:r.name,hired:true,sp:r.sp||3,base:r.base,per:r.per,sec:r.sec,err:r.err,price:r.price,stars:r.stars});
   if(r.role==='cash'){e.slot=(r.slot!=null)?r.slot:(r.cx<0?1:0);const p0=POST[e.slot];e.g.position.set(p0[0],0,p0[1]);e.g.rotation.y=Math.PI;e.st='work';if(e.slot===1)addDesk()}
   else{if(r.carry){const k=CAR.slots.indexOf(null);if(k>=0){const o=mkCart(r.carry[0],r.carry[1]);o.st='bed';o.slot=k;CAR.slots[k]=o;CAR.g.add(o.g);o.g.position.set(...CAR.sp(k));if(!CARTM.includes(o.m))CARTM.push(o.m)}}
-   let i=0;const u=EMPS.filter(x=>x.seatTaken).map(x=>x.seat);while(u.includes(i))i++;e.seat=i;e.seatTaken=true;e.seated=true;CAR.g.add(e.g);const sp=slotOf(i);e.g.position.set(sp.x,slotY(sp),sp.z);e.g.rotation.set(0,sp.yaw,0);e.mode=sp.m;e.st='ride'}})}catch(er){console.log('restore staff',er)}
+   let i=0;const u=EMPS.filter(x=>x.seatTaken).map(x=>x.seat);while(u.includes(i))i++;e.veh=CAR;e.seat=i;e.seatTaken=true;e.seated=true;CAR.g.add(e.g);const sp=slotOf(i);e.g.position.set(sp.x,slotY(sp),sp.z);e.g.rotation.set(0,sp.yaw,0);e.mode=sp.m;e.st='ride'}})}catch(er){console.log('restore staff',er)}
  staffRestored=true}
 restoreWorld();restoreStaff(0);
 setInterval(saveNow,2000);
@@ -1230,7 +1266,7 @@ window.__tukIn=()=>DRV===TUK;
 window.__tukHit=(x,z)=>TUK.loaded&&TUK.hits(x,z,0);
 // ---- ركوب / نزول ----
 enterTuk=function(){if(!TUK.loaded)return toast('⏳ التكتك لسه يتحمّل... ثواني');if(DRV)return;if(HELD||HCART||HCAN!=null)return toast('أنزل ما في يدك أولاً');if(SIT)$('bSit').onclick();
- DRV=TUK;HEAD=0;P.pitch=0;TUK.enter();app.classList.add('drv','tuk');toast('🛺 حرّك الجير إلى D (وفكّ P BRAKE) ثم اضغط البنزين — ووجّه بالأسهم ◀ ▶')};
+ DRV=TUK;switchStaffVehicle(TUK);HEAD=0;P.pitch=0;TUK.enter();app.classList.add('drv','tuk');toast('🛺 حرّك الجير إلى D (وفكّ P BRAKE) ثم اضغط البنزين — ووجّه بالأسهم ◀ ▶')};
 exitTuk=function(){const c=TUK,s=Math.sin(c.hd),co=Math.cos(c.hd);if(Math.abs(c.v)>1.2)return toast('🛑 أوقف التكتك أولاً');
  TUK.leave();DRV=null;c.v=0;app.classList.remove('drv','tuk');TUK.aL=TUK.aR=0;
  for(const k of[1.5,-1.5,2.2,-2.2,0]){const f=k?1.1:-1.8,x=c.g.position.x+co*k+s*f,z=c.g.position.z-s*k+co*f;if(!blocked(x,z)){P.x=x;P.z=z;break}}
