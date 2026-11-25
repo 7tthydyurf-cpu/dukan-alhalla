@@ -799,9 +799,10 @@ function staffWorld(v,lx,lz){v=v||CAR;const p=v.g.position,h=v.hd,s=Math.sin(h),
 function staffApproach(v){return staffWorld(v,0,v===CAR?-3.45:-1.25)}
 function staffSeatSpot(v,i){
  if(v===CAR)return slotOf(i);
- const spots=[[-.29,.72,-.43,Math.PI/2],[.29,.72,-.43,-Math.PI/2],[-.29,.72,.40,Math.PI/2],[.29,.72,.40,-Math.PI/2]];
- const a=spots[i%spots.length],layer=Math.floor(i/spots.length);
- return{m:'sit',x:a[0],y:a[1]+layer*.22,z:a[2],yaw:a[3]};
+ // مقعدان داخل مؤخرة صندوق التكتك؛ يواجه العاملان مقدمة المركبة ولا يجلسان فوق الكراتين.
+ const spots=[[-.20,.66,-.52,0],[.20,.66,-.52,0]];
+ const a=spots[Math.min(i,spots.length-1)];
+ return{m:'sit',x:a[0],y:a[1],z:a[2],yaw:a[3]};
 }
 function staffSeatY(v,sp){return v===CAR?slotY(sp):sp.y}
 function switchStaffVehicle(v){
@@ -811,11 +812,15 @@ function switchStaffVehicle(v){
  riders.forEach(e=>{
   if(e.st==='ride'&&e.seated&&e.veh!==v){
    if(e.veh&&e.veh.g)e.veh.g.remove(e.g);
+   if(v===TUKV&&used.length>=2){
+    e.seated=false;e.seatTaken=false;e.veh=v;e.st='wait';S.add(e.g);
+    const p=staffWorld(v,-.72,-1.18);e.g.position.set(p[0],0,p[1]);e.g.rotation.y=v.hd+Math.PI;return;
+   }
    let i=0;while(used.includes(i))i++;used.push(i);
    e.veh=v;e.seat=i;e.seatTaken=true;v.g.add(e.g);
    const sp=staffSeatSpot(v,i);e.g.position.set(sp.x,staffSeatY(v,sp),sp.z);e.g.rotation.set(0,sp.yaw||0,0);e.mode=sp.m;
-  }else if(e.st==='toCar'){
-   e.veh=v;e.path=[staffApproach(v)];
+  }else if(e.st==='toCar'||e.st==='wait'){
+   e.veh=v;e.st='toCar';e.path=[staffApproach(v)];
   }
  });
 }
@@ -829,6 +834,7 @@ function hopTo(e,a,b,d,done){e.hop={t:0,d,a,b,done};e.st='climb'}
 function startBoard(e,v){
  v=v||e.veh||staffVehicle();e.veh=v;
  const used=EMPS.filter(x=>x!==e&&x.seatTaken&&x.veh===v).map(x=>x.seat);let i=0;while(used.includes(i))i++;
+ if(v===TUKV&&i>=2){e.seatTaken=false;e.seated=false;e.st='wait';S.add(e.g);const p=staffWorld(v,-.72,-1.18);e.g.position.set(p[0],0,p[1]);e.g.rotation.y=v.hd+Math.PI;return}
  e.seat=i;e.seatTaken=true;v.g.add(e.g);e.g.rotation.set(0,0,0);
  const sp=staffSeatSpot(v,i),a=[0,-v.g.position.y,v===CAR?-3.45:-1.25],b=[sp.x,staffSeatY(v,sp),sp.z];
  hopTo(e,a,b,.9+.16*Math.hypot(b[0]-a[0],b[2]-a[2]),()=>{e.seated=true;e.g.rotation.y=sp.yaw||0;e.mode=sp.m;e.st='ride'});e.hop.r0=0;e.hop.r1=normA(sp.yaw||0)}
@@ -887,7 +893,8 @@ function cashUpd(e,dt){const PC=(typeof pc!=='undefined'&&pc)?pc.c:null;
  else e.mode='idle'}
 function eUpd(e,dt){e.t+=dt;
  switch(e.st){
- case'toCar':{const v=e.veh||staffVehicle();if(Math.abs(v.v)>.5){e.mode='idle';break}e.path=[staffApproach(v)];if(eWalk(e,dt)){startBoard(e,v);e.g.rotation.y=0}break}
+ case'toCar':{const v=e.veh||staffVehicle();if(Math.abs(v.v)>.5){e.mode='idle';break}e.path=[staffApproach(v)];if(eWalk(e,dt)){startBoard(e,v);if(e.st!=='wait')e.g.rotation.y=0}break}
+ case'wait':{const v=staffVehicle(),n=EMPS.filter(x=>x!==e&&x.hired&&x.role==='load'&&x.seated&&x.veh===v).length;if(v!==TUKV||n<2){e.st='toCar';e.veh=v;e.path=[staffApproach(v)]}else{const p=staffWorld(v,-.72,-1.18);e.g.position.set(p[0],0,p[1]);e.mode='idle'}break}
   case'ride':{const v=e.veh||staffVehicle(),sp=staffSeatSpot(v,e.seat||0);e.mode=sp.m;e.g.position.y+=(staffSeatY(v,sp)-e.g.position.y)*Math.min(1,dt*5);break}
  case'climb':{const h=e.hop;if(!h){e.st='ride';break}h.t+=dt;const p=Math.min(1,h.t/h.d),q=p*p*(3-2*p);e.g.position.set(h.a[0]+(h.b[0]-h.a[0])*q,h.a[1]+(h.b[1]-h.a[1])*q+.28*Math.sin(Math.PI*p),h.a[2]+(h.b[2]-h.a[2])*q);if(h.r0!=null)e.g.rotation.y=h.r0+normA(h.r1-h.r0)*q;e.mode='climb';if(p>=1){e.mode='idle';const f=h.done;e.hop=null;f()}break}
  case'exit':e.wt-=dt;if(e.wt<=0)alight(e,()=>{const v=e.veh||staffVehicle();e.st='toBed';e.path=[staffWorld(v,0,v===CAR?-3.35:-1.05)]});break;
@@ -914,9 +921,9 @@ function eUpd(e,dt){e.t+=dt;
  case'lPick':if(eWalk(e,dt)){e.wt=.8;e.st='lGrab';e.g.rotation.y=Math.PI/2}break;
  case'lGrab':e.wt-=dt;if(e.wt<=0){const o=mkCart(e.want,10);o.st='npc';e.g.add(o.g);o.g.position.set(0,1.04,.52);o.g.rotation.set(0,0,0);e.carry=o;const v=e.veh||staffVehicle(),pz=STZ-3.15+e.want*.9;e.path=[[STX+4,pz],[STX-7.5,pz],staffWorld(v,-1.8,v===CAR?-3.3:-1.05),staffWorld(v,0,v===CAR?-3.35:-1.25)];e.st='lBring'}break;
  case'lBring':if(eWalk(e,dt)){const v=e.veh||staffVehicle(),slots=staffSlots(v),o=e.carry,k=slots.indexOf(null);e.g.remove(o.g);e.carry=null;
-  if(k<0){o.st='floor';cartPlace(o,e.g.position.x,-.04,e.g.position.z,0)}else{slots[k]=o;o.st='bed';o.slot=k;v.g.add(o.g);o.g.position.set(...v.sp(k));o.g.rotation.set(0,v===CAR?0:Math.PI/2,0);if(!CARTM.includes(o.m))CARTM.push(o.m)}
+  if(k<0){ITEMS[o.t].st+=o.n;o.st='stock';toast('📦 الصندوق ممتلئ — حُفظت الكرتونة الزائدة في المخزون')}else{slots[k]=o;o.st='bed';o.slot=k;v.g.add(o.g);o.g.position.set(...v.sp(k));o.g.rotation.set(0,v===CAR?0:Math.PI/2,0);if(!CARTM.includes(o.m))CARTM.push(o.m)}
   beep(700,.04);e.done2=(e.done2||0)+1;e.st='lGo'}break;
- case'lBack':if(eWalk(e,dt)){if(STAFF_VEH&&e.veh!==STAFF_VEH)e.veh=STAFF_VEH;e.st='toCar'}break;
+ case'lBack':if(eWalk(e,dt))e.st='toCar';break;
  case'toShop':if(eWalk(e,dt)){e.st='work';e.g.rotation.y=Math.PI}break;
  case'work':cashUpd(e,dt);break;
  case'leaving':if(eWalk(e,dt)){S.remove(e.g);EMPS.splice(EMPS.indexOf(e),1)}break;
@@ -943,7 +950,7 @@ function staffUpdate(dt){
  EMPS.slice().forEach(e=>eUpd(e,dt))}
 
 // ===== الإعدادات: رفع صوت مخصص + فحص التحديثات =====
-const APP_VER='1.6.0';
+const APP_VER='1.7.0';
 const SETS=(()=>{try{return JSON.parse(localStorage.getItem('dk_set')||'{}')}catch(e){return{}}})();
 Object.assign(AUD.vol,SETS.vol||{});SETS.names=SETS.names||{};
 const saveSets=()=>{try{localStorage.setItem('dk_set',JSON.stringify({vol:AUD.vol,names:SETS.names}))}catch(e){}};
@@ -1191,7 +1198,7 @@ const S_=S;
 try{(()=>{
 const TD=JSON.parse($('tukD').textContent);
 const SCt=TD.SC,AXV=new THREE.Vector3(...TD.axis).normalize();
-const TUK={g:new THREE.Group(),v:0,hd:Math.PI/2,st:0,wr:0,wh:[],fw:[],slots:Array(24).fill(null),loaded:false,isTuk:true,ok:false,
+const TUK={g:new THREE.Group(),v:0,hd:Math.PI/2,st:0,wr:0,wh:[],fw:[],slots:Array(6).fill(null),loaded:false,isTuk:true,ok:false,
  gear:'P',hand:false,gas:0,brake:0,gasT:0,brakeT:0,whl:0,whlHold:false,lights:false,sig:0,haz:false,sigTurned:false,
  cam:'in',oy:0,op:.32,dist:6.5,lastLook:0,eng:null,hornO:null,bl:null,spot:null,aL:0,aR:0,
  door:{R:{a:0,t:0,p:null,dir:1},L:{a:0,t:0,p:null,dir:-1}},
@@ -1203,7 +1210,7 @@ TUK.g.userData.veh=TUK;CAR.g.userData.veh=CAR;
 const X0=-17.5,Z0=8.7;
 TUK.g.position.set(X0,-.1,Z0);TUK.g.rotation.y=TUK.hd;S.add(TUK.g);
 // ---- أماكن الكراتين في الصندوق (٢ × ٣ × ٤ طبقات = ٢٤) ----
-TUK.sp=function(k){const L=k/6|0,i=k%6;return[i%2?.17:-.17,.66+L*.27,.07+((i/2|0)-1)*.46]};
+TUK.sp=function(k){const row=Math.floor(k/2),col=k%2;return[col?.19:-.19,.66,-.12+row*.40]};
 TUK.hits=function(x,z,pad){return vehHitsAt(this,x,z,pad)};
 TUK.toggleDoor=function(){toast('🛺 التكتك بدون أبواب')};
 TUK.toggleCam=function(){this.cam=this.cam==='in'?'out':'in';this.oy=0;if(this.cam==='in'){HEAD=0;P.pitch=0}toast(this.cam==='in'?'📷 كاميرا السائق':'📷 كاميرا خارج التكتك — اسحب بإصبعك للدوران')};
@@ -1283,7 +1290,7 @@ arrow('tkL','aL');arrow('tkR','aR');
 const rb=document.createElement('button');rb.id='bTukRide';rb.className='g';rb.textContent='🛺 اركب التكتك';app.appendChild(rb);TUK.bRide=rb;rb.onclick=()=>enterTuk();
 // ---- استرجاع الحفظ ----
 try{const s0=SAVED&&SAVED.v===1&&SAVED.tuk;if(s0){TUK.g.position.x=s0.x;TUK.g.position.z=s0.z;TUK.hd=s0.hd;TUK.g.rotation.y=s0.hd;TUK.lights=!!s0.lights;
- (s0.sl||[]).forEach((c,k)=>{if(c&&k<TUK.slots.length){const o=mkCart(c[0],c[1]);o.st='bed';o.slot=k;o.veh=TUK;TUK.slots[k]=o;TUK.g.add(o.g);o.g.position.set(...TUK.sp(k));o.g.rotation.set(0,Math.PI/2,0);if(!CARTM.includes(o.m))CARTM.push(o.m)}});
+ let overflow=0;(s0.sl||[]).forEach((c,k)=>{if(c&&k<TUK.slots.length){const o=mkCart(c[0],c[1]);o.st='bed';o.slot=k;o.veh=TUK;TUK.slots[k]=o;TUK.g.add(o.g);o.g.position.set(...TUK.sp(k));o.g.rotation.set(0,Math.PI/2,0);if(!CARTM.includes(o.m))CARTM.push(o.m)}else if(c&&ITEMS[c[0]]){ITEMS[c[0]].st+=(c[1]||10);overflow++}});if(overflow)toast('📦 تم تنظيم الحمولة: الكراتين الزائدة حُفظت في مخزون الدكان');
  if(SAVED.inTuk){const s=Math.sin(TUK.hd),co=Math.cos(TUK.hd);P.x=TUK.g.position.x+co*1.6+s*1.1;P.z=TUK.g.position.z-s*1.6+co*1.1;P.yaw=TUK.hd+Math.PI/2}}}catch(e){console.log('tuk restore',e)}
 TUKV=TUK;
 setTimeout(()=>TUK.load(),3200);
