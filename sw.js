@@ -1,47 +1,113 @@
-// دكان الحلة — تشغيل بدون إنترنت
-const VER = '1.3.0';
+// دكان الحلة — تخزين كامل للتشغيل دون إنترنت
+const VER = '1.5.0';
 const CACHE = 'dukkan-' + VER;
 const IDX = new URL('index.html', self.registration.scope).href;
+const KARO = new URL('karoD.txt', self.registration.scope).href;
+const MODEL = new URL('zongshen.glb', self.registration.scope).href;
+const VERSION = new URL('version.json', self.registration.scope).href;
 const LIBS = [
   'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
   'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js'
 ];
-self.addEventListener('install', e => {
-  e.waitUntil((async () => {
-    const c = await caches.open(CACHE);
-    await Promise.all(LIBS.map(u => fetch(u, { mode: 'no-cors' }).then(r => c.put(u, r)).catch(() => {})));
-    try { const r = await fetch(IDX, { cache: 'reload' }); if (r.ok) await c.put(IDX, r); } catch (_) {}
-    self.skipWaiting();
+
+async function cacheURL(cache, url) {
+  try {
+    const response = await fetch(url, { cache: 'reload' });
+    if (response && response.ok) await cache.put(url, response);
+  } catch (_) {
+    // لا نفشل تثبيت عامل الخدمة إذا تعذر تنزيل مورد؛ سيُعاد المحاولة عند الاتصال.
+  }
+}
+
+self.addEventListener('install', event => {
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE);
+    await Promise.all([
+      ...LIBS.map(async url => {
+        try {
+          const response = await fetch(url, { mode: 'no-cors', cache: 'reload' });
+          if (response) await cache.put(url, response);
+        } catch (_) {}
+      }),
+      cacheURL(cache, IDX),
+      cacheURL(cache, KARO),
+      cacheURL(cache, MODEL),
+      cacheURL(cache, VERSION)
+    ]);
+    await self.skipWaiting();
   })());
 });
-self.addEventListener('activate', e => {
-  e.waitUntil((async () => {
-    for (const k of await caches.keys()) if (k !== CACHE) await caches.delete(k);
+
+self.addEventListener('activate', event => {
+  event.waitUntil((async () => {
+    for (const key of await caches.keys()) {
+      if (key.startsWith('dukkan-') && key !== CACHE) await caches.delete(key);
+    }
     await self.clients.claim();
   })());
 });
-self.addEventListener('message', e => {
-  if (e.data && e.data.t === 'refresh') {
-    e.waitUntil(caches.open(CACHE).then(c => c.delete(IDX)).then(() => e.source && e.source.postMessage({ t: 'ok' })));
+
+self.addEventListener('message', event => {
+  if (event.data && event.data.t === 'refresh') {
+    event.waitUntil(
+      caches.open(CACHE)
+        .then(cache => cache.delete(IDX))
+        .then(() => event.source && event.source.postMessage({ t: 'ok' }))
+    );
   }
 });
-self.addEventListener('fetch', e => {
-  const r = e.request;
-  if (r.method !== 'GET') return;
-  const u = new URL(r.url);
-  if (u.origin === location.origin) {
-    if (r.mode === 'navigate') {
-      e.respondWith(caches.match(IDX).then(m => m || fetch(r).then(x => {
-        if (x.ok) { const cp = x.clone(); caches.open(CACHE).then(c => c.put(IDX, cp)); }
-        return x;
-      })));
+
+self.addEventListener('fetch', event => {
+  const request = event.request;
+  if (request.method !== 'GET') return;
+  const url = new URL(request.url);
+
+  if (url.origin === self.location.origin) {
+    if (/version\.json$/.test(url.pathname)) {
+      event.respondWith(
+        fetch(request, { cache: 'no-store' })
+          .then(response => {
+            if (response && response.ok) {
+              const copy = response.clone();
+              caches.open(CACHE).then(cache => cache.put(request, copy));
+            }
+            return response;
+          })
+          .catch(() => caches.match(request).then(cached => cached || Response.error()))
+      );
       return;
     }
-    if (/version\.json$/.test(u.pathname)) { e.respondWith(fetch(r, { cache: 'no-store' }).catch(() => caches.match(r))); return; }
-    e.respondWith(caches.match(r).then(m => m || fetch(r)));
+
+    if (request.mode === 'navigate') {
+      event.respondWith(
+        caches.match(IDX).then(cached => cached || fetch(request).then(response => {
+          if (response && response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE).then(cache => cache.put(IDX, copy));
+          }
+          return response;
+        }))
+      );
+      return;
+    }
+
+    event.respondWith(
+      caches.match(request).then(cached => cached || fetch(request).then(response => {
+        if (response && response.ok) {
+          const copy = response.clone();
+          caches.open(CACHE).then(cache => cache.put(request, copy));
+        }
+        return response;
+      }))
+    );
     return;
   }
-  e.respondWith(caches.match(r).then(m => m || fetch(r).then(x => {
-    const cp = x.clone(); caches.open(CACHE).then(c => c.put(r, cp)); return x;
-  })));
+
+  event.respondWith(
+    caches.match(request).then(cached => cached || fetch(request).then(response => {
+      const copy = response.clone();
+      caches.open(CACHE).then(cache => cache.put(request, copy));
+      return response;
+    }))
+  );
 });
