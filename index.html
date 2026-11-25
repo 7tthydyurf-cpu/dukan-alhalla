@@ -151,10 +151,49 @@ canvas{position:absolute;left:0;top:0}
 
 const $=id=>document.getElementById(id);
 const S=new THREE.Scene();S.background=new THREE.Color(0x5b9af0);S.fog=new THREE.Fog(0xa4c6ef,140,640);
-S.add(new THREE.HemisphereLight(0xffffff,0x887766,1.05));const sun=new THREE.DirectionalLight(0xfff0d0,.5);sun.position.set(30,50,20);S.add(sun);
+const hemi=new THREE.HemisphereLight(0xffffff,0x887766,1.05);S.add(hemi);const sun=new THREE.DirectionalLight(0xfff0d0,.5);sun.position.set(30,50,20);S.add(sun);
 const L=c=>new THREE.MeshLambertMaterial({color:c});
 const app=document.createElement('div');app.id='app';document.body.insertBefore(app,document.body.firstChild);[...document.body.children].forEach(e=>{if(e!==app&&e.tagName!=='SCRIPT')app.appendChild(e)});
-const R=new THREE.WebGLRenderer({antialias:true});R.setPixelRatio(Math.min(devicePixelRatio,2));app.insertBefore(R.domElement,app.firstChild);
+const R=new THREE.WebGLRenderer({antialias:true, powerPreference:'high-performance'});
+app.insertBefore(R.domElement,app.firstChild);
+let GFX_MODE='balanced';try{GFX_MODE=localStorage.getItem('dk_gfx')==='ultra'?'ultra':'balanced'}catch(e){}
+function applyGraphicsQuality(mode,notify){
+  GFX_MODE=mode==='ultra'?'ultra':'balanced';
+  try{localStorage.setItem('dk_gfx',GFX_MODE)}catch(e){}
+  const ultra=GFX_MODE==='ultra';
+  R.setPixelRatio(Math.min(window.devicePixelRatio||1,ultra?2.5:1.6));
+  R.shadowMap.enabled=ultra;
+  R.shadowMap.type=THREE.PCFSoftShadowMap;
+  R.toneMapping=ultra?THREE.ACESFilmicToneMapping:THREE.NoToneMapping;
+  R.toneMappingExposure=ultra?1.08:1;
+  R.outputEncoding=THREE.sRGBEncoding;
+  sun.intensity=ultra?.82:.5;
+  hemi.intensity=ultra?1.22:1.05;
+  sun.castShadow=ultra;
+  if(ultra){
+    sun.shadow.mapSize.set(2048,2048);
+    sun.shadow.camera.left=-125;sun.shadow.camera.right=125;
+    sun.shadow.camera.top=125;sun.shadow.camera.bottom=-125;
+    sun.shadow.camera.near=.5;sun.shadow.camera.far=360;
+    sun.shadow.bias=-.00018;sun.shadow.normalBias=.025;
+  }
+  const maxAniso=R.capabilities.getMaxAnisotropy();
+  S.traverse(o=>{
+    if(!o.isMesh)return;
+    o.castShadow=ultra;o.receiveShadow=ultra;
+    const mats=Array.isArray(o.material)?o.material:[o.material];
+    mats.forEach(m=>{
+      if(!m)return;
+      ['map','normalMap','roughnessMap','metalnessMap','alphaMap'].forEach(k=>{
+        if(m[k])m[k].anisotropy=ultra?Math.min(12,maxAniso):Math.min(4,maxAniso);
+      });
+    });
+  });
+  if(notify&&typeof toast==='function')toast(ultra?'✨ تم تفعيل الرسومات الفائقة — قد يزيد استهلاك البطارية':'تم تفعيل الرسومات المتوازنة');
+}
+applyGraphicsQuality(GFX_MODE,false);
+const __sceneAdd=S.add.bind(S);
+S.add=function(){if(GFX_MODE==='ultra'){for(let a=0;a<arguments.length;a++){const o=arguments[a];if(o&&o.traverse)o.traverse(n=>{if(n.isMesh){n.castShadow=true;n.receiveShadow=true}})}}return __sceneAdd.apply(S,arguments)};
 const C=new THREE.PerspectiveCamera(65,2,.1,900);C.rotation.order='YXZ';S.add(C);let ROT=false;
 function layout(){ROT=innerHeight>innerWidth;app.classList.toggle('rot',ROT);const W=app.clientWidth,H=app.clientHeight;R.setSize(W,H);C.aspect=W/H;C.updateProjectionMatrix()}
 addEventListener('resize',layout);addEventListener('orientationchange',()=>setTimeout(layout,250));layout();
@@ -950,7 +989,7 @@ function staffUpdate(dt){
  EMPS.slice().forEach(e=>eUpd(e,dt))}
 
 // ===== الإعدادات: رفع صوت مخصص + فحص التحديثات =====
-const APP_VER='1.7.0';
+const APP_VER='1.8.0';
 const SETS=(()=>{try{return JSON.parse(localStorage.getItem('dk_set')||'{}')}catch(e){return{}}})();
 Object.assign(AUD.vol,SETS.vol||{});SETS.names=SETS.names||{};
 const saveSets=()=>{try{localStorage.setItem('dk_set',JSON.stringify({vol:AUD.vol,names:SETS.names}))}catch(e){}};
@@ -972,12 +1011,13 @@ function renderSet(){const nm=SETS.names;
  $('setBody').innerHTML=KINDS.map(([k,ic,t])=>`<div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.12)"><div style="font-size:15px;font-weight:bold">${ic} ${t}</div><div style="font-size:12px;opacity:.8;margin:3px 0">${nm[k]?'الملف: '+nm[k]:'الصوت الافتراضي'}</div>
  <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><button class="g" data-pick="${k}">📂 اختر ملف</button><button data-test="${k}" style="background:#2a6fb0">▶ تجربة</button>${nm[k]?`<button data-del="${k}" style="background:#c0392b">🗑</button>`:''}</div>
  <div style="display:flex;align-items:center;gap:8px;margin-top:6px"><span style="font-size:12px">🔈</span><input type="range" min="0" max="100" value="${Math.round(AUD.vol[k]*100)}" data-vol="${k}" style="flex:1"><span style="font-size:12px">🔊</span></div></div>`).join('')+
- `<div style="padding:10px 0;font-size:13px">ℹ️ الإصدار الحالي: <b>${APP_VER}</b> <button id="chkUpd" style="margin-right:8px;background:#2a6fb0">🔄 تحقق من التحديث</button></div><div style="padding:6px 0"><button id="resetSave" style="background:#c0392b">🗑 مسح التقدم والبدء من جديد</button><div style="font-size:11px;opacity:.7;margin-top:4px">💾 اللعبة تحفظ تقدمك تلقائياً كل ثانيتين على هذا الجهاز.</div></div><div style="font-size:11px;opacity:.7">يقبل الملفات: mp3 · wav · ogg · m4a — الحد 15MB. الملفات تُحفظ في جهازك وتبقى بعد إغلاق اللعبة.</div>`;
+ `<div style="padding:10px 0;border-bottom:1px solid rgba(255,255,255,.15)"><div style="font-size:15px;font-weight:bold">🎮 جودة الرسومات</div><div style="display:flex;gap:7px;flex-wrap:wrap;margin:8px 0"><button id="gfxBalanced" style="background:${GFX_MODE==='balanced'?'#16834a':'#555'}">⚖️ متوازنة</button><button id="gfxUltra" class="g" style="background:${GFX_MODE==='ultra'?'#16834a':'#1769aa'}">✨ فائقة 4K</button></div><div style="font-size:11px;opacity:.75">الوضع الفائق يرفع دقة العرض والظلال ووضوح الخامات قدر ما يسمح به هاتفك. قد يستهلك بطارية أكثر؛ ويمكن الرجوع إلى المتوازن في أي وقت.</div></div><div style="padding:10px 0;font-size:13px">ℹ️ الإصدار الحالي: <b>${APP_VER}</b> <button id="chkUpd" style="margin-right:8px;background:#2a6fb0">🔄 تحقق من التحديث</button></div><div style="padding:6px 0"><button id="resetSave" style="background:#c0392b">🗑 مسح التقدم والبدء من جديد</button><div style="font-size:11px;opacity:.7;margin-top:4px">💾 اللعبة تحفظ تقدمك تلقائياً كل ثانيتين على هذا الجهاز.</div></div><div style="font-size:11px;opacity:.7">يقبل الملفات: mp3 · wav · ogg · m4a — الحد 15MB. الملفات تُحفظ في جهازك وتبقى بعد إغلاق اللعبة.</div>`;
  const q=s=>$('setBody').querySelectorAll(s);
  q('[data-pick]').forEach(b=>b.onclick=()=>{$('audioIn').dataset.kind=b.dataset.pick;$('audioIn').value='';$('audioIn').click()});
  q('[data-del]').forEach(b=>b.onclick=async()=>{const k=b.dataset.del;await IDB.del(k).catch(()=>{});delete nm[k];if(k==='music')muSet(null);else AUD.buf[k]=null;saveSets();if(DRV&&k==='engine')CAR.engStart();renderSet()});
  q('[data-vol]').forEach(r=>r.oninput=()=>{const k=r.dataset.vol;AUD.vol[k]=r.value/100;if(k==='music')MU.volume=AUD.vol.music;saveSets()});
  q('[data-test]').forEach(b=>b.onclick=()=>testSnd(b.dataset.test));
+ const gb=$('gfxBalanced'),gu=$('gfxUltra');if(gb)gb.onclick=()=>{applyGraphicsQuality('balanced',true);renderSet()};if(gu)gu.onclick=()=>{applyGraphicsQuality('ultra',true);renderSet()};
  const cu=$('chkUpd');if(cu)cu.onclick=()=>checkUpdate(true);
  const rs=$('resetSave');if(rs){let armed=0;rs.onclick=()=>{if(!armed){armed=1;rs.textContent='⚠ اضغط مرة ثانية للتأكيد';setTimeout(()=>{armed=0;rs.textContent='🗑 مسح التقدم والبدء من جديد'},4000)}else resetProgress()}}}
 function testSnd(k){try{if(k==='music'){if(!muUrl)return toast('اختر ملف موسيقى أولاً');muWant=true;if(MU.paused)muPlay();else{MU.pause();muWant=false}return}
