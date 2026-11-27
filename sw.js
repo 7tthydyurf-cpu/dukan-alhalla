@@ -1,57 +1,43 @@
-// دكان الحلة — Service Worker موثوق للتشغيل دون إنترنت
-// يحافظ على النسخ القديمة حتى يتأكد من وجود نسخة جديدة قابلة للفتح.
-const CACHE = 'dukkan-offline-1.9.4';
-const SCOPE = self.registration.scope;
-const IDX = new URL('index.html', SCOPE).href;
-const KARO = new URL('karoD.txt', SCOPE).href;
-const VERSION = new URL('version.json', SCOPE).href;
+// دكان الحلة — تخزين كامل للتشغيل دون إنترنت
+const VER = '1.9.5';
+const CACHE = 'dukkan-' + VER;
+const IDX = new URL('index.html', self.registration.scope).href;
+const KARO = new URL('karoD.txt', self.registration.scope).href;
+const MODEL = new URL('zongshen.glb', self.registration.scope).href;
+const SHEEP_HOUSE = new URL('sheep_house.glb', self.registration.scope).href;
+const SHEEP_MODEL = new URL('sheep.glb', self.registration.scope).href;
+const VERSION = new URL('version.json', self.registration.scope).href;
 const LIBS = [
   'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
-  'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js'
+  'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js',
+  'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/SkeletonUtils.js'
 ];
 
-async function saveResponse(cache, key, response) {
+async function cacheURL(cache, url) {
   try {
-    if (response && (response.ok || response.type === 'opaque')) {
-      await cache.put(key, response.clone());
-      return true;
-    }
-  } catch (e) { /* نترك النسخة السابقة كما هي */ }
-  return false;
-}
-
-async function cacheURL(cache, url, mode) {
-  try {
-    const options = { cache: 'reload' };
-    if (mode === 'no-cors') options.mode = 'no-cors';
-    const response = await fetch(url, options);
-    return await saveResponse(cache, url, response);
-  } catch (e) { return false; }
-}
-
-async function cachedFirst(request, ignoreSearch = true) {
-  const current = await caches.open(CACHE);
-  let hit = await current.match(request, { ignoreSearch });
-  if (hit) return hit;
-  const keys = await caches.keys();
-  for (const key of keys) {
-    if (key === CACHE || !key.startsWith('dukkan-')) continue;
-    const old = await caches.open(key);
-    hit = await old.match(request, { ignoreSearch });
-    if (hit) return hit;
+    const response = await fetch(url, { cache: 'reload' });
+    if (response && response.ok) await cache.put(url, response);
+  } catch (_) {
+    // لا نفشل تثبيت عامل الخدمة إذا تعذر تنزيل مورد؛ سيُعاد المحاولة عند الاتصال.
   }
-  return undefined;
 }
 
 self.addEventListener('install', event => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE);
-    // الملفات الضرورية فقط أثناء التثبيت؛ المجسمات الكبيرة تُخزّن عند استخدامها.
-    await Promise.allSettled([
+    await Promise.all([
+      ...LIBS.map(async url => {
+        try {
+          const response = await fetch(url, { mode: 'no-cors', cache: 'reload' });
+          if (response) await cache.put(url, response);
+        } catch (_) {}
+      }),
       cacheURL(cache, IDX),
       cacheURL(cache, KARO),
-      cacheURL(cache, VERSION),
-      ...LIBS.map(url => cacheURL(cache, url, 'no-cors'))
+      cacheURL(cache, MODEL),
+      cacheURL(cache, SHEEP_HOUSE),
+      cacheURL(cache, SHEEP_MODEL),
+      cacheURL(cache, VERSION)
     ]);
     await self.skipWaiting();
   })());
@@ -59,19 +45,20 @@ self.addEventListener('install', event => {
 
 self.addEventListener('activate', event => {
   event.waitUntil((async () => {
-    // لا نحذف أي كاش قديم هنا؛ فقد يحتوي على مجسمات سبق تنزيلها.
+    for (const key of await caches.keys()) {
+      if (key.startsWith('dukkan-') && key !== CACHE) await caches.delete(key);
+    }
     await self.clients.claim();
   })());
 });
 
 self.addEventListener('message', event => {
   if (event.data && event.data.t === 'refresh') {
-    event.waitUntil((async () => {
-      const cache = await caches.open(CACHE);
-      await cache.delete(IDX);
-      await cacheURL(cache, IDX);
-      if (event.source) event.source.postMessage({ t: 'ok' });
-    })());
+    event.waitUntil(
+      caches.open(CACHE)
+        .then(cache => cache.delete(IDX))
+        .then(() => event.source && event.source.postMessage({ t: 'ok' }))
+    );
   }
 });
 
@@ -81,73 +68,51 @@ self.addEventListener('fetch', event => {
   const url = new URL(request.url);
 
   if (url.origin === self.location.origin) {
-    if (/\/version\.json$/.test(url.pathname)) {
-      event.respondWith((async () => {
-        try {
-          const response = await fetch(request, { cache: 'no-store' });
-          if (response && response.ok) {
-            const cache = await caches.open(CACHE);
-            await saveResponse(cache, VERSION, response);
-          }
-          return response;
-        } catch (e) {
-          return (await cachedFirst(VERSION)) || Response.error();
-        }
-      })());
+    if (/version\.json$/.test(url.pathname)) {
+      event.respondWith(
+        fetch(request, { cache: 'no-store' })
+          .then(response => {
+            if (response && response.ok) {
+              const copy = response.clone();
+              caches.open(CACHE).then(cache => cache.put(request, copy));
+            }
+            return response;
+          })
+          .catch(() => caches.match(request).then(cached => cached || Response.error()))
+      );
       return;
     }
 
     if (request.mode === 'navigate') {
-      event.respondWith((async () => {
-        const saved = await cachedFirst(IDX);
-        if (saved) return saved;
-        try {
-          const response = await fetch(request);
+      event.respondWith(
+        caches.match(IDX).then(cached => cached || fetch(request).then(response => {
           if (response && response.ok) {
-            const cache = await caches.open(CACHE);
-            await saveResponse(cache, IDX, response);
+            const copy = response.clone();
+            caches.open(CACHE).then(cache => cache.put(IDX, copy));
           }
           return response;
-        } catch (e) {
-          const fallback = await cachedFirst(request) || await cachedFirst(IDX);
-          return fallback || new Response('افتح اللعبة مرة واحدة بالإنترنت حتى تُحفظ للتشغيل دون إنترنت.', {
-            status: 503, headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-          });
-        }
-      })());
+        }))
+      );
       return;
     }
 
-    event.respondWith((async () => {
-      const saved = await cachedFirst(request);
-      if (saved) return saved;
-      try {
-        const response = await fetch(request);
+    event.respondWith(
+      caches.match(request).then(cached => cached || fetch(request).then(response => {
         if (response && response.ok) {
-          const cache = await caches.open(CACHE);
-          await saveResponse(cache, request, response);
+          const copy = response.clone();
+          caches.open(CACHE).then(cache => cache.put(request, copy));
         }
         return response;
-      } catch (e) {
-        return (await cachedFirst(request)) || Response.error();
-      }
-    })());
+      }))
+    );
     return;
   }
 
-  // مكتبات CDN: استخدم النسخة المخزنة أولاً، وخزّنها عند أول اتصال ناجح.
-  event.respondWith((async () => {
-    const saved = await cachedFirst(request);
-    if (saved) return saved;
-    try {
-      const response = await fetch(request);
-      if (response && (response.ok || response.type === 'opaque')) {
-        const cache = await caches.open(CACHE);
-        await saveResponse(cache, request, response);
-      }
+  event.respondWith(
+    caches.match(request).then(cached => cached || fetch(request).then(response => {
+      const copy = response.clone();
+      caches.open(CACHE).then(cache => cache.put(request, copy));
       return response;
-    } catch (e) {
-      return (await cachedFirst(request)) || Response.error();
-    }
-  })());
+    }))
+  );
 });
