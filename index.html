@@ -990,7 +990,7 @@ function staffUpdate(dt){
  EMPS.slice().forEach(e=>eUpd(e,dt))}
 
 // ===== الإعدادات: رفع صوت مخصص + فحص التحديثات =====
-const APP_VER='1.9.6';
+const APP_VER='1.9.7';
 const SETS=(()=>{try{return JSON.parse(localStorage.getItem('dk_set')||'{}')}catch(e){return{}}})();
 Object.assign(AUD.vol,SETS.vol||{});SETS.names=SETS.names||{};
 const saveSets=()=>{try{localStorage.setItem('dk_set',JSON.stringify({vol:AUD.vol,names:SETS.names}))}catch(e){}};
@@ -1502,12 +1502,15 @@ function addHomeSheep(n){
  }
 }
 function cargoLocal(v,i){
+ // استخدم نفس اتجاه وإحداثيات أرضية صندوق المركبة التي تستخدمها الكراتين.
+ // التكتك: صفّان عرضياً، والامتداد إلى الخلف باتجاه +Z (مثل TUK.sp).
  if(v===window.__tukVehicle){
-  const row=Math.floor(i/4),col=i%4;
-  return new THREE.Vector3((col-1.5)*.18,.685,.53-row*.48);
+  const row=Math.floor(i/2),col=i%2;
+  return new THREE.Vector3(col===0?-.19:.19,.70,-.12+row*.72);
  }
- const row=Math.floor(i/5),col=i%5;
- return new THREE.Vector3((col-2)*.27,.865,-.10-row*.38);
+ // السيارة: ثلاثة مواضع عرضية وامتداد خلفي مطابق لاتجاه CAR.sp.
+ const row=Math.floor(i/3),col=i%3;
+ return new THREE.Vector3((col-1)*.55,.84,-.15-row*.52);
 }
 function putHeldSheepInto(v){
  if(!SHEEP_HELD||!v||!v.g)return;
@@ -1546,18 +1549,30 @@ function pickupOneSheep(o){
 }
 function unloadSheepAtHome(v){
  const a=v&&v.sheepCargo||[];if(!a.length)return;
- if(Math.abs(v.v||0)>.35)return toast('🛑 أوقف المركبة قبل تنزيل الأغنام');
- const n=a.length;
+ if(Math.abs(v.v||0)>.35)return toast('🛑 أوقف المركبة تماماً قبل تنزيل الأغنام');
+ const n=a.length,atHome=Math.hypot(v.g.position.x-HX,v.g.position.z-HZ)<14;
+ v.g.updateMatrixWorld(true);
  a.forEach((o,i)=>{
-  const col=(SHEEP_HOME.length+i)%10,row=Math.floor((SHEEP_HOME.length+i)/10);
-  const target=new THREE.Vector3(77.4+col*1.25,sheepGround(77.4+col*1.25,-36.5+row*1.35),-36.5+row*1.35);
-  const from=v.g.localToWorld(o.position.clone());
+  let target;
+  if(atHome){
+   const k=SHEEP_HOME.length+i,col=k%10,row=Math.floor(k/10);
+   const x=77.4+col*1.25,z=-36.5+row*1.35;
+   target=new THREE.Vector3(x,sheepGround(x,z)+.035,z);
+  }else{
+   // عند التنزيل خارج البيت، ضع الأغنام على الأرض بجانب المركبة بدلاً من إرسالها لمكان بعيد.
+   const col=i%4,row=Math.floor(i/4),side=(row%2===0?1:-1);
+   const local=new THREE.Vector3(side*(1.55+col*.42),0,-1.15+row*.78);
+   target=v.g.localToWorld(local);
+   target.y=sheepGround(target.x,target.z)+.035;
+  }
+  const from=new THREE.Vector3();o.updateMatrixWorld(true);o.getWorldPosition(from);
   S.add(o);o.position.copy(from);
-  SHEEP_MOVING.push({o,v:null,local:target,from,to:target.clone(),start:performance.now()+i*70,duration:450,rot:Math.random()*6.28,home:true});
+  SHEEP_MOVING.push({o,v:null,local:target,from,to:target.clone(),start:performance.now()+i*90,duration:520,rot:Math.random()*6.28,home:true});
  });
- v.sheepCargo=[];if(v===window.__tukVehicle)SHEEP_STATE.tuk=0;else SHEEP_STATE.car=0;
+ v.sheepCargo=[];
+ if(v===window.__tukVehicle)SHEEP_STATE.tuk=0;else SHEEP_STATE.car=0;
  SHEEP_STATE.home=Math.min(50,SHEEP_STATE.home+n);saveSheepState();
- toast('✅ تم تنزيل '+n+' رأس غنم في حوش البيت');
+ toast(atHome?'✅ تم تنزيل '+n+' رأس غنم في حوش البيت':'✅ تم إنزال '+n+' رأس غنم بجانب المركبة');
 }
 let SHEEP_LAST_TICK=performance.now();
 function tickSheepMovement(now){
@@ -1619,8 +1634,13 @@ function updateSheepButton(){
   const nearSheep=nearestPenSheep();
   if(nearSheep){SHEEP_ACTION={type:'pickup',o:nearSheep.o};SHEEP_BTN.textContent='🐑 حمل هذه النعجة';SHEEP_BTN.style.display='block';return}
  }
- const near=nearestPlayerVehicle(),homeNear=near&&Math.hypot(near.v.g.position.x-HX,near.v.g.position.z-HZ)<14;
- if(near&&homeNear&&(near.v.sheepCargo||[]).length&&near.d<6){SHEEP_ACTION={type:'unload',v:near.v};SHEEP_BTN.textContent='🐑 تنزيل الأغنام في حوش البيت';SHEEP_BTN.style.display='block';return}
+ const near=DRV?{v:DRV,d:0}:nearestPlayerVehicle();
+ if(near&&(near.v.sheepCargo||[]).length&&near.d<6){
+  SHEEP_ACTION={type:'unload',v:near.v};
+  const atHome=Math.hypot(near.v.g.position.x-HX,near.v.g.position.z-HZ)<14;
+  SHEEP_BTN.textContent=atHome?'🐑 تنزيل الأغنام في حوش البيت':'🐑 إنزال الأغنام بجانب المركبة';
+  SHEEP_BTN.style.display='block';return;
+ }
  SHEEP_BTN.style.display='none';
 }
 SHEEP_BTN.onclick=()=>{
