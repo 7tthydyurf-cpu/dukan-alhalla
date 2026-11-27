@@ -205,7 +205,7 @@ for(let r=0;r<8;r++)for(let i=-1;i<4;i++){g.fillStyle=`hsl(${8+Math.random()*8},
 const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;return t})();
 function brick(w,h,d,x,y,z){const t=BT.clone();t.needsUpdate=true;t.repeat.set(Math.max(w,d),h);return box(w,h,d,0,x,y,z,new THREE.MeshLambertMaterial({map:t}))}
 // world
-const STX=44,STZ=-78;function hgt(x,z){const d=Math.hypot(x-10,z),t=Math.min(1,Math.max(0,(d-170)/230)),s=t*t*(3-2*t),n=.5*Math.sin(x*.011+1.3)*Math.cos(z*.013)+.3*Math.sin(x*.027-z*.021)+.2*Math.sin(x*.05+z*.047);return -.1+s*(75+55*n)}
+const STX=44,STZ=-78;function hgt(x,z){const d=Math.hypot(x-10,z),t=Math.min(1,Math.max(0,(d-145)/250)),s=t*t*(3-2*t),n=.5*Math.sin(x*.011+1.3)*Math.cos(z*.013)+.3*Math.sin(x*.027-z*.021)+.2*Math.sin(x*.05+z*.047);return -.1+s*(75+55*n)}
 function buildTerrain(){const g=new THREE.PlaneGeometry(1400,1400,170,170);g.rotateX(-Math.PI/2);const p=g.attributes.position,col=new Float32Array(p.count*3);
 for(let i=0;i<p.count;i++){const x=p.getX(i),z=p.getZ(i),h=hgt(x,z);p.setY(i,h);const t=Math.min(1,Math.max(0,h/55)),v=(Math.sin(x*.9)*Math.cos(z*.8)+Math.sin(x*.37+z*.31))*.025;col[i*3]=.12+.34*t+v;col[i*3+1]=.38-.14*t+v;col[i*3+2]=.11+.03*t+v}
 g.setAttribute('color',new THREE.BufferAttribute(col,3));g.computeVertexNormals();
@@ -481,7 +481,7 @@ const sw=new THREE.Mesh(new THREE.TorusGeometry(.17,.025,8,16),L(0x222222));sw.p
 g.position.set(-9,-.1,8.3);g.rotation.y=CAR.hd;S.add(g)})();
 const carHit=(x,z)=>{if(DRV)return false;const p=CAR.g.position,s=Math.sin(CAR.hd),c=Math.cos(CAR.hd);return(CAR.hitD||[-1.2,0,1.2]).some(d=>Math.hypot(x-(p.x+s*d),z-(p.z+c*d))<(CAR.hitR||1.35))||(window.__tukHit&&window.__tukHit(x,z))};
 function vehHitsAt(o,x,z,pad){if(!o||!o.g)return false;const p=o.g.position,s=Math.sin(o.hd),c=Math.cos(o.hd);return(o.hitD||[-1.2,0,1.2]).some(d=>Math.hypot(x-(p.x+s*d),z-(p.z+c*d))<(o.hitR||1.35)+(pad||0))}
-const carBlocked=(x,z,h,v)=>{v=v||CAR;const ds=v.exs||(v.ex?[-v.ex,0,v.ex]:[-1.7,0,1.7]),mg=v.mg||.9;return ds.some(d=>{const px=x+Math.sin(h)*d,pz=z+Math.cos(h)*d;return RC.some(r=>r[0]<1e4&&px>r[0]-mg&&px<r[1]+mg&&pz>r[2]-mg&&pz<r[3]+mg)||Math.hypot(px-10,pz)>165||[CAR,TUKV].some(o=>o&&o!==v&&o.g&&o.g.parent&&vehHitsAt(o,px,pz,.45))||(KR.loaded&&KR.g&&Math.hypot(px-KR.g.position.x,pz-KR.g.position.z)<2.6)})};
+const carBlocked=(x,z,h,v)=>{v=v||CAR;const ds=v.exs||(v.ex?[-v.ex,0,v.ex]:[-1.7,0,1.7]),mg=v.mg||.9;return ds.some(d=>{const px=x+Math.sin(h)*d,pz=z+Math.cos(h)*d;return RC.some(r=>r[0]<1e4&&px>r[0]-mg&&px<r[1]+mg&&pz>r[2]-mg&&pz<r[3]+mg)||Math.hypot(px-10,pz)>235||[CAR,TUKV].some(o=>o&&o!==v&&o.g&&o.g.parent&&vehHitsAt(o,px,pz,.45))||(KR.loaded&&KR.g&&Math.hypot(px-KR.g.position.x,pz-KR.g.position.z)<2.6)})};
 function claimSpot(v){const sp=CAR.spot;if(!sp)return;if(v.lights&&sp.parent!==v.g){const po=sp.parent&&sp.parent.userData.veh;if(!po||!po.lights||v===DRV){v.g.add(sp);v.g.add(sp.target);const a=v.spotPos||[0,.95,2.4],t=v.spotTgt||[0,.2,16];sp.position.set(a[0],a[1],a[2]);sp.target.position.set(t[0],t[1],t[2])}}if(sp.parent===v.g)sp.intensity=v.lights?2.2:0}
 function exitVeh(){if(TUKV&&DRV===TUKV&&exitTuk)exitTuk();else exitCar()}
 function driveUpdate(dt,f,r){const c=DRV||CAR;
@@ -597,7 +597,7 @@ function prep(sc){sc.traverse(o=>{if(!o.isMesh)return;(Array.isArray(o.material)
 let RA=null,RD=null;function roads(){if(!RA||!RD)return;FBm.forEach(m=>S.remove(m));
 for(let k=-10;k<10;k++){const t=RA.clone(true);t.rotation.y=Math.PI/2;t.position.set(25,0,k*10+5);S.add(t)}
 const dt=(x,z)=>{const t=RD.clone(true);t.position.set(x,0,z);S.add(t);const m=[];t.traverse(o=>{if(o.name&&o.name.indexOf('grass_tufts')>=0)m.push(o)});TU.push({x,z,m})};
-for(let k=0;k<7;k++)dt(13.2-11.8*k,12);for(let k=0;k<3;k++)dt(36.8+11.8*k,-30)}
+for(let k=0;k<7;k++)dt(13.2-11.8*k,12);for(let k=0;k<3;k++)dt(36.8+11.8*k,-30);for(let x=72.2;x<=143.0;x+=11.8)dt(x,-30)}
 glb('roadA',s=>{prep(s);RA=s;roads()});glb('roadD',s=>{prep(s);RD=s;roads()});
 function lod(){TU.forEach(t=>{const v=Math.hypot(t.x-P.x,t.z-P.z)<45;t.m.forEach(o=>o.visible=v)})}
 function pose(c,m){if(c.rig)poseR(c,m);else poseP(c,m)}
@@ -1341,8 +1341,8 @@ setTimeout(()=>TUK.load(),3200);
 let last=performance.now(),spT=3;
 (function loop(now){requestAnimationFrame(loop);const dt=Math.min(.05,(now-last)/1000);last=now;DT=dt;KR.upd(dt);
 let f=jy+K.f-K.b,r=jx+K.r-K.l;const m=Math.hypot(f,r);if(m>1){f/=m;r/=m}
-if(DRV)driveUpdate(dt,f,r);if(DRV!==CAR)CAR.idle(dt);if(TUKV&&DRV!==TUKV)TUKV.idle(dt);if(!DRV&&!KR.on&&m>.05&&!SIT){const sp=(run?6:3.4)*dt,vx=-Math.sin(P.yaw)*f+Math.cos(P.yaw)*r,vz=-Math.cos(P.yaw)*f-Math.sin(P.yaw)*r;
-if(!blocked(P.x+vx*sp,P.z))P.x=Math.max(-150,Math.min(150,P.x+vx*sp));if(!blocked(P.x,P.z+vz*sp))P.z=Math.max(-150,Math.min(150,P.z+vz*sp))}
+if(DRV){if(typeof fuelFor==='function'&&fuelFor(DRV)<=0.001){DRV.v=0;if(!FUEL_EMPTY_NOTICE){FUEL_EMPTY_NOTICE=true;toast('⛽ نفد الوقود؛ توجه إلى محطة الوقود')} }else driveUpdate(dt,f,r)}fuelDriveTick(dt);if(DRV!==CAR)CAR.idle(dt);if(TUKV&&DRV!==TUKV)TUKV.idle(dt);if(!DRV&&!KR.on&&m>.05&&!SIT){const sp=(run?6:3.4)*dt,vx=-Math.sin(P.yaw)*f+Math.cos(P.yaw)*r,vz=-Math.cos(P.yaw)*f-Math.sin(P.yaw)*r;
+if(!blocked(P.x+vx*sp,P.z))P.x=Math.max(-230,Math.min(230,P.x+vx*sp));if(!blocked(P.x,P.z+vz*sp))P.z=Math.max(-230,Math.min(230,P.z+vz*sp))}
 if(DRV){carCam(dt)}else if(KR.on){KR.cam(dt)}else{camY+=((SIT?SIT.h:1.7)-camY)*Math.min(1,dt*8);C.position.set(P.x,camY,P.z)}C.rotation.set(P.pitch,P.yaw,0);
 if(!atHome&&!over){tm+=dt*2;if(tm>=1320){over=true;toast('🌙 انتهى الدوام — روح البيت من ⚙')}}
 if(!closed&&!over){spT-=dt;if(spT<=0){spawn();spT=Math.max(4,10-lvl*.7)+Math.random()*5}}
@@ -1458,29 +1458,6 @@ function sheepFence(cx,cz,w,d,gate=false){
   rail(cx-3.8,cz+d/2,2.0,true,1.05);
  }
 }
-// ===== أبعاد الصناديق الفعلية (إحداثيات محلية للمركبة) =====
-// التكتك: أرضية الصندوق من الأجسام الصلبة hb (x ±.43 ، z من -.72 إلى .86 ، سطح الأرضية y=.665) — المقصورة تبدأ من z=1.1
-// السيارة: أرضية الصندوق (x ±.85 ، z من -2.1 إلى -.1 ، سطح الأرضية y=.94)
-const SHEEP_PEN_SCALE=.16,SHEEP_WALK_SPEED=.55;
-const SHEEP_PEN_BOX={x0:14.2,x1:35.8,z0:-145,z1:-125};
-const SHEEP_YARD_BOX={x0:77.8,x1:90.2,z0:-37.2,z1:-22.8};
-const SHEEP_BED={
- tuk:{cap:12,x0:-.37,x1:.37,z0:-.66,z1:.80,y:.665},
- car:{cap:20,x0:-.78,x1:.78,z0:-2.0,z1:-.2,y:.945}
-};
-let SHEEP_DIM=null,SHEEP_ROLES=null;const SHEEP_ALL=[];
-const shClamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-const shAng=(a,b)=>{let d=a-b;return Math.atan2(Math.sin(d),Math.cos(d))};
-function sheepDims(){
- if(SHEEP_DIM)return SHEEP_DIM;
- SHEEP_BASE.updateMatrixWorld(true);
- const bb=new THREE.Box3().setFromObject(SHEEP_BASE),sz=bb.getSize(new THREE.Vector3());
- SHEEP_DIM={lenZ:sz.z>=sz.x,L:Math.max(sz.x,sz.z,.001),W:Math.max(Math.min(sz.x,sz.z),.001),H:sz.y,minY:bb.min.y,ox:(bb.min.x+bb.max.x)/2,oz:(bb.min.z+bb.max.z)/2};
- return SHEEP_DIM;
-}
-// اتجاه "أمام" النعجة في المجسم: محور الطول (+Z عادةً)
-const sheepYawFor=(dx,dz)=>sheepDims().lenZ?Math.atan2(dx,dz):Math.atan2(-dz,dx);
-const sheepFwdOf=yaw=>sheepDims().lenZ?[Math.sin(yaw),Math.cos(yaw)]:[Math.cos(yaw),-Math.sin(yaw)];
 function makeFallbackSheepBase(){
  const g=new THREE.Group();
  const wool=new THREE.MeshLambertMaterial({color:0xf0e8d8}),face=new THREE.MeshLambertMaterial({color:0x65564b}),leg=new THREE.MeshLambertMaterial({color:0x4a4039}),eye=new THREE.MeshBasicMaterial({color:0x171717});
@@ -1493,108 +1470,64 @@ function makeFallbackSheepBase(){
  part(new THREE.SphereGeometry(.3,8,6),wool,0,2.7,-3.0).scale.set(.35,.35,.65);
  return g;
 }
-// ---- أدوار الأنيميشن: مشي / رعي / وقوف (حسب أسماء المقاطع الموجودة في الملف) ----
-function sheepRoles(){
- if(SHEEP_ROLES)return SHEEP_ROLES;
- const c=SHEEP_CLIPS||[],find=re=>c.find(x=>re.test(x.name||''));
- let graze=find(/graze|eat|grass|feed|bite|head.?down/i),idle=find(/idle|stand|rest|breath|wait|stay/i),walk=find(/walk|trot|run|gallop|locomo|move/i);
- if(!walk)walk=c.find(x=>x!==graze&&x!==idle)||null;
- if(graze&&graze===walk)graze=null;
- if(idle&&idle===walk)idle=null;
- return SHEEP_ROLES={walk,graze,idle};
-}
-function sheepAnim(o,role,speed=0){
- const a=o.userData.ai;if(!a||!a.mixer)return;
- const R=a.roles;
- let clip=role==='walk'?R.walk:role==='graze'?(R.graze||R.idle):(R.idle||R.graze),freeze=false;
- if(!clip){clip=R.walk;freeze=true}
- if(!clip)return;
- let act=a.acts.get(clip);if(!act){act=a.mixer.clipAction(clip);a.acts.set(clip,act)}
- if(a.cur!==act){
-  if(a.cur)a.cur.fadeOut(.35);
-  act.reset();act.time=Math.random()*clip.duration;act.setEffectiveWeight(1).fadeIn(.35).play();a.cur=act;
- }
- // سرعة تحريك الأرجل مرتبطة بسرعة المشي الفعلية → لا انزلاق
- act.setEffectiveTimeScale(role==='walk'||freeze?shClamp(speed/SHEEP_WALK_SPEED,0,1.6):1);
- a.frozen=freeze&&speed<.02;
- a.hasStill=!freeze;
-}
 function makeSheep(scale){
  let o;
  try{o=(THREE.SkeletonUtils&&THREE.SkeletonUtils.clone)?THREE.SkeletonUtils.clone(SHEEP_BASE):null}catch(e){console.warn('sheep skeleton clone',e)}
  if(!o)o=makeFallbackSheepBase();
- o.scale.setScalar(scale);o.rotation.order='YXZ';
+ o.scale.setScalar(scale);
  o.traverse(n=>{if(n.isMesh){n.castShadow=true;n.receiveShadow=true;n.frustumCulled=false;if(n.material){if(Array.isArray(n.material))n.material.forEach(m=>{m.side=THREE.DoubleSide});else n.material.side=THREE.DoubleSide}}});
- const ai={state:'idle',t:Math.random()*5,speed:0,vmax:.45,yaw:0,tilt:0,pitch:0,tx:0,tz:0,ph:Math.random()*6.28,box:SHEEP_PEN_BOX,mixer:null,acts:new Map(),cur:null,roles:sheepRoles(),frozen:false,hasStill:false};
- if(SHEEP_CLIPS.length&&THREE.AnimationMixer){try{ai.mixer=new THREE.AnimationMixer(o);SHEEP_MIXERS.push(ai.mixer)}catch(e){console.warn('sheep animation',e)}}
- o.userData.ai=ai;SHEEP_ALL.push(o);
- sheepAnim(o,'idle',0);
+ if(SHEEP_CLIPS.length&&THREE.AnimationMixer){
+  try{const mixer=new THREE.AnimationMixer(o);SHEEP_CLIPS.forEach(c=>mixer.clipAction(c).play());SHEEP_MIXERS.push(mixer);o.userData.sheepMixer=mixer}catch(e){console.warn('sheep animation',e)}
+ }
  return o;
 }
 function sheepGround(x,z){return typeof hgt==='function'?hgt(x,z):-.1}
-function spawnSheep(x,z,box,list){
- const o=makeSheep(SHEEP_PEN_SCALE),a=o.userData.ai;
- o.position.set(x,sheepGround(x,z)+.025,z);a.yaw=Math.random()*Math.PI*2;o.rotation.y=a.yaw;a.box=box;
- a.state=Math.random()<.6?'graze':'idle';a.t=Math.random()*8;sheepAnim(o,a.state,0);
- S.add(o);list.push(o);return o;
-}
 function addPenSheep(n){
  for(let i=0;i<n;i++){
   const col=i%10,row=Math.floor(i/10);
-  spawnSheep(14.5+col*2.25+(Math.random()-.5)*.35,-125.5-row*2.0+(Math.random()-.5)*.3,SHEEP_PEN_BOX,SHEEP_PEN);
+  const x=14.5+col*2.25+(Math.random()-.5)*.35;
+  const z=-125.5-row*2.0+(Math.random()-.5)*.3;
+  const o=makeSheep(.16);o.position.set(x,sheepGround(x,z)+.025,z);o.rotation.y=Math.random()*Math.PI*2;
+  S.add(o);SHEEP_PEN.push(o);
+  SHEEP_WANDER.push({o,tx:x+(Math.random()-.5)*2,tz:z+(Math.random()-.5)*2,next:performance.now()+1000+Math.random()*3500});
  }
 }
 function addHomeSheep(n){
  for(let i=0;i<n;i++){
   const col=i%10,row=Math.floor(i/10);
-  spawnSheep(77.4+col*1.25+(Math.random()-.5)*.2,-36.5+row*1.35+(Math.random()-.5)*.2,SHEEP_YARD_BOX,SHEEP_HOME);
+  const x=77.4+col*1.25+(Math.random()-.5)*.2;
+  const z=-36.5+row*1.35+(Math.random()-.5)*.2;
+  const o=makeSheep(.16);o.position.set(x,sheepGround(x,z)+.025,z);o.rotation.y=Math.random()*Math.PI*2;
+  S.add(o);SHEEP_HOME.push(o);
  }
 }
-// ---- ترتيب الأغنام داخل الصندوق: يُحسب من أبعاد المجسم الفعلية وأبعاد أرضية الصندوق ----
-function sheepLayout(kind){
- const B=SHEEP_BED[kind],d=sheepDims(),W=B.x1-B.x0,D=B.z1-B.z0,N=B.cap;
- let best=null;
- for(const lenX of [true,false])for(let cols=1;cols<=N;cols++){
-  const rows=Math.ceil(N/cols),cw=W/cols,cd=D/rows;
-  const s=lenX?Math.min(cw/d.L,cd/d.W):Math.min(cw/d.W,cd/d.L);
-  if(!best||s>best.s+1e-6)best={s,lenX,cols,rows,cw,cd};
+function cargoLocal(v,i){
+ // استخدم نفس اتجاه وإحداثيات أرضية صندوق المركبة التي تستخدمها الكراتين.
+ // التكتك: صفّان عرضياً، والامتداد إلى الخلف باتجاه +Z (مثل TUK.sp).
+ if(v===window.__tukVehicle){
+  const row=Math.floor(i/2),col=i%2;
+  return new THREE.Vector3(col===0?-.19:.19,.70,-.12+row*.72);
  }
- const sc=Math.min(SHEEP_PEN_SCALE,best.s*.9),slots=[];
- for(let i=0;i<N;i++){
-  const r=Math.floor(i/best.cols),c=i%best.cols,inRow=Math.min(best.cols,N-r*best.cols);
-  const cx=B.x0+(c+.5+(best.cols-inRow)/2)*best.cw,cz=B.z0+(r+.5)*best.cd;
-  const yaw=best.lenX?sheepYawFor(r%2?1:-1,0):sheepYawFor(0,1);
-  // تصحيح إزاحة مركز المجسم عن نقطة أصله حتى تقع النعجة في منتصف الخانة بدقة
-  const vx=d.ox*sc,vz=d.oz*sc,co=Math.cos(yaw),si=Math.sin(yaw);
-  slots.push({x:cx-(vx*co+vz*si),y:B.y-d.minY*sc+.012,z:cz-(-vx*si+vz*co),yaw});
- }
- return{scale:sc,slots,center:new THREE.Vector3((B.x0+B.x1)/2,B.y,(B.z0+B.z1)/2)};
-}
-function cargoOf(v){
- if(!v.sheepLay){v.sheepLay=sheepLayout(v===window.__tukVehicle?'tuk':'car');v.sheepSlots=Array(v.sheepLay.slots.length).fill(null)}
- return v.sheepLay;
-}
-const syncCargo=v=>{v.sheepCargo=(v.sheepSlots||[]).filter(Boolean)};
-function bedDist(v){
- const lay=cargoOf(v);v.g.updateMatrixWorld(true);
- const w=v.g.localToWorld(lay.center.clone());return Math.hypot(w.x-P.x,w.z-P.z);
-}
-function sheepSetMode(o,state){
- const a=o.userData.ai;a.state=state;a.speed=0;o.rotation.x=0;o.rotation.z=0;a.tilt=0;a.pitch=0;a.yaw=o.rotation.y;
- sheepAnim(o,'idle',0);
+ // السيارة: ثلاثة مواضع عرضية وامتداد خلفي مطابق لاتجاه CAR.sp.
+ const row=Math.floor(i/3),col=i%3;
+ return new THREE.Vector3((col-1)*.55,.84,-.15-row*.52);
 }
 function putHeldSheepInto(v){
  if(!SHEEP_HELD||!v||!v.g)return;
  if(Math.abs(v.v||0)>.35)return toast('🛑 أوقف المركبة أولاً');
  if(v.slots&&v.slots.some(Boolean))return toast('📦 أفرغ الكراتين أولاً قبل تحميل الأغنام');
- const lay=cargoOf(v),idx=v.sheepSlots.indexOf(null);
- if(idx<0)return toast('🐑 صندوق المركبة ممتلئ');
- const o=SHEEP_HELD;SHEEP_HELD=null;SHEEP_HELD_FROM=null;
- v.sheepSlots[idx]=o;syncCargo(v);sheepSetMode(o,'fly');
- SHEEP_MOVING.push({kind:'in',o,v,idx,from:o.position.clone(),fs:o.scale.x,fy:o.rotation.y,start:performance.now(),duration:650});
- if(v===window.__tukVehicle)SHEEP_STATE.tuk=v.sheepCargo.length;else SHEEP_STATE.car=v.sheepCargo.length;
+ const cap=v===window.__tukVehicle?12:20,current=(v.sheepCargo||[]).length;
+ if(current>=cap)return toast('🐑 صندوق المركبة ممتلئ');
+ const o=SHEEP_HELD,idx=current,local=cargoLocal(v,idx);
+ SHEEP_HELD=null;SHEEP_HELD_FROM=null;
+ v.sheepCargo=v.sheepCargo||[];v.g.updateMatrixWorld(true);
+ const from=o.position.clone(),to=v.g.localToWorld(local.clone());
+ v.sheepCargo.push(o);
+ SHEEP_MOVING.push({o,v,local,from,to,start:performance.now(),duration:520,rot:o.rotation.y});
+ if(v===window.__tukVehicle)SHEEP_STATE.tuk=current+1;else SHEEP_STATE.car=current+1;
+ SHEEP_STATE.remaining=Math.max(0,SHEEP_STATE.remaining-1);
  saveSheepState();
- toast('🐑 تم وضع النعجة داخل صندوق '+(v===window.__tukVehicle?'التكتك':'السيارة')+' ('+v.sheepCargo.length+'/'+lay.slots.length+')');
+ toast('🐑 تم وضع نعجة واحدة داخل صندوق '+(v===window.__tukVehicle?'التكتك':'السيارة'));
 }
 function nearestPenSheep(){
  if(!P||!SHEEP_PEN.length)return null;
@@ -1610,173 +1543,67 @@ function pickupOneSheep(o){
  if(!o||SHEEP_HELD||DRV)return;
  const i=SHEEP_PEN.indexOf(o);if(i<0)return;
  SHEEP_PEN.splice(i,1);
- SHEEP_STATE.remaining=Math.max(0,SHEEP_STATE.remaining-1);
- SHEEP_HELD=o;sheepSetMode(o,'held');saveSheepState();
- toast('🐑 حملت نعجة؛ ضعها في صندوق التكتك/السيارة أو أنزلها على الأرض');
-}
-// رفع نعجة واحدة يدوياً من الصندوق (الأقرب للاعب)
-function takeOutOneSheep(v){
- if(SHEEP_HELD||DRV||!v)return;
- if(Math.abs(v.v||0)>.35)return toast('🛑 أوقف المركبة أولاً');
- const sl=v.sheepSlots||[];let best=-1,bd=1e9;const w=new THREE.Vector3();
- v.g.updateMatrixWorld(true);
- sl.forEach((o,i)=>{if(!o||o.userData.ai.state==='fly')return;o.updateMatrixWorld(true);o.getWorldPosition(w);const d=Math.hypot(w.x-P.x,w.z-P.z);if(d<bd){bd=d;best=i}});
- if(best<0)return toast('⏳ انتظر حتى تستقر الأغنام في الصندوق');
- const o=sl[best];sl[best]=null;syncCargo(v);
- S.attach(o);                       // يحافظ على موضعها واتجاهها العالمي عند الخروج من المركبة
- SHEEP_HELD=o;sheepSetMode(o,'held');
- if(v===window.__tukVehicle)SHEEP_STATE.tuk=v.sheepCargo.length;else SHEEP_STATE.car=v.sheepCargo.length;
- saveSheepState();toast('🐑 رفعت نعجة من الصندوق');
-}
-const inBox=(b,x,z,m=0)=>x>b.x0-m&&x<b.x1+m&&z>b.z0-m&&z<b.z1+m;
-function releaseSheep(o,box,yard){
- const a=o.userData.ai;a.box=box;a.state='idle';a.t=.6+Math.random()*2;a.speed=0;a.yaw=o.rotation.y;
- sheepAnim(o,'idle',0);
- const l=yard?SHEEP_HOME:SHEEP_PEN;if(l.indexOf(o)<0)l.push(o);
-}
-// إنزال النعجة المحمولة على الأرض أمام اللاعب
-function dropHeldSheep(){
- const o=SHEEP_HELD;if(!o)return;
- const yaw=P.yaw||0,x=P.x+Math.sin(yaw)*1.2,z=P.z+Math.cos(yaw)*1.2;
- SHEEP_HELD=null;
- o.position.x=x;o.position.z=z;o.scale.setScalar(SHEEP_PEN_SCALE);
- if(inBox(SHEEP_YARD_BOX,x,z,1)){SHEEP_STATE.home=Math.min(50,SHEEP_STATE.home+1);releaseSheep(o,SHEEP_YARD_BOX,true);toast('✅ أنزلت النعجة في حوش البيت')}
- else{
-  SHEEP_STATE.remaining=Math.min(50,SHEEP_STATE.remaining+1);
-  const box=inBox(SHEEP_PEN_BOX,x,z,1)?SHEEP_PEN_BOX:{x0:x-6,x1:x+6,z0:z-6,z1:z+6};
-  releaseSheep(o,box,false);toast('✅ أنزلت النعجة على الأرض — ستبدأ بالرعي');
- }
- saveSheepState();
+ const wi=SHEEP_WANDER.findIndex(w=>w.o===o);if(wi>=0)SHEEP_WANDER.splice(wi,1);
+ SHEEP_HELD=o;SHEEP_HELD_FROM={x:o.position.x,z:o.position.z};
+ toast('🐑 حملت نعجة واحدة؛ اقترب من التكتك أو السيارة لوضعها في الصندوق');
 }
 function unloadSheepAtHome(v){
  const a=v&&v.sheepCargo||[];if(!a.length)return;
  if(Math.abs(v.v||0)>.35)return toast('🛑 أوقف المركبة تماماً قبل تنزيل الأغنام');
- if(a.some(o=>o.userData.ai.state==='fly'))return toast('⏳ انتظر لحظة حتى تستقر الأغنام');
  const n=a.length,atHome=Math.hypot(v.g.position.x-HX,v.g.position.z-HZ)<14;
  v.g.updateMatrixWorld(true);
- const used=[];
- a.slice().forEach((o,i)=>{
+ a.forEach((o,i)=>{
   let target;
   if(atHome){
-   // موضع حر داخل الحوش لا يتداخل مع أغنام أخرى
-   let bx=0,bz=0,bd=-1;
-   for(let k=0;k<14;k++){
-    const x=SHEEP_YARD_BOX.x0+.8+Math.random()*(SHEEP_YARD_BOX.x1-SHEEP_YARD_BOX.x0-1.6),z=SHEEP_YARD_BOX.z0+.8+Math.random()*(SHEEP_YARD_BOX.z1-SHEEP_YARD_BOX.z0-1.6);
-    let md=1e9;for(const q of SHEEP_HOME.concat(used))md=Math.min(md,Math.hypot((q.position?q.position.x:q.x)-x,(q.position?q.position.z:q.z)-z));
-    if(md>bd){bd=md;bx=x;bz=z}
-   }
-   used.push({x:bx,z:bz});target=new THREE.Vector3(bx,sheepGround(bx,bz)+.025,bz);
+   const k=SHEEP_HOME.length+i,col=k%10,row=Math.floor(k/10);
+   const x=77.4+col*1.25,z=-36.5+row*1.35;
+   target=new THREE.Vector3(x,sheepGround(x,z)+.035,z);
   }else{
+   // عند التنزيل خارج البيت، ضع الأغنام على الأرض بجانب المركبة بدلاً من إرسالها لمكان بعيد.
    const col=i%4,row=Math.floor(i/4),side=(row%2===0?1:-1);
-   const local=new THREE.Vector3(side*(1.7+col*.55),0,-1.15+row*.85);
-   target=v.g.localToWorld(local);target.y=sheepGround(target.x,target.z)+.025;
+   const local=new THREE.Vector3(side*(1.55+col*.42),0,-1.15+row*.78);
+   target=v.g.localToWorld(local);
+   target.y=sheepGround(target.x,target.z)+.035;
   }
-  o.updateMatrixWorld(true);S.attach(o);
-  const idx=v.sheepSlots.indexOf(o);if(idx>=0)v.sheepSlots[idx]=null;
-  sheepSetMode(o,'fly');
-  SHEEP_MOVING.push({kind:'out',o,from:o.position.clone(),to:target,fs:o.scale.x,fy:o.rotation.y,ty:Math.random()*6.28,start:performance.now()+i*110,duration:650,yard:atHome});
+  const from=new THREE.Vector3();o.updateMatrixWorld(true);o.getWorldPosition(from);
+  S.add(o);o.position.copy(from);
+  SHEEP_MOVING.push({o,v:null,local:target,from,to:target.clone(),start:performance.now()+i*90,duration:520,rot:Math.random()*6.28,home:true});
  });
- syncCargo(v);
+ v.sheepCargo=[];
  if(v===window.__tukVehicle)SHEEP_STATE.tuk=0;else SHEEP_STATE.car=0;
- if(atHome)SHEEP_STATE.home=Math.min(50,SHEEP_STATE.home+n);else SHEEP_STATE.remaining=Math.min(50,SHEEP_STATE.remaining+n);
- saveSheepState();
+ SHEEP_STATE.home=Math.min(50,SHEEP_STATE.home+n);saveSheepState();
  toast(atHome?'✅ تم تنزيل '+n+' رأس غنم في حوش البيت':'✅ تم إنزال '+n+' رأس غنم بجانب المركبة');
-}
-// ---- سلوك الرعي والمشي: رعي ← وقوف ← مشي بتسارع وانعطاف تدريجي، مع ربط سرعة الأنيميشن بالسرعة الفعلية ----
-function sheepPickTarget(o,group){
- const a=o.userData.ai,b=a.box,mg=.5;
- let bx=o.position.x,bz=o.position.z;
- if(Math.random()<.3&&group.length>1){const q=group[(Math.random()*group.length)|0];if(q!==o&&q.userData.ai.state!=='held'){bx=q.position.x;bz=q.position.z}}
- const ang=Math.random()*6.283,dist=1.6+Math.random()*3.6;
- a.tx=shClamp(bx+Math.sin(ang)*dist,b.x0+mg,b.x1-mg);a.tz=shClamp(bz+Math.cos(ang)*dist,b.z0+mg,b.z1-mg);
- a.vmax=.32+Math.random()*.22;
-}
-function updateFreeSheep(o,dt,now,group){
- const a=o.userData.ai,b=a.box;
- a.t-=dt;
- if(a.state==='walk'){
-  const dx=a.tx-o.position.x,dz=a.tz-o.position.z,d=Math.hypot(dx,dz);
-  if(d<.35||a.t<=0){a.state=Math.random()<.8?'graze':'idle';a.t=(a.state==='graze'?5:2)+Math.random()*7}
-  else{
-   const da=shAng(sheepYawFor(dx,dz),a.yaw);
-   a.yaw+=shClamp(da,-2.2*dt,2.2*dt);
-   const align=shClamp(1-Math.abs(da)/1.1,0,1),vt=a.vmax*align*Math.min(1,d/1.1+.2);
-   a.speed+=(vt-a.speed)*Math.min(1,dt*2.2);
-  }
- }else{
-  a.speed+=(0-a.speed)*Math.min(1,dt*4.5);
-  if(a.t<=0){
-   const r=Math.random();
-   if(r<.5){sheepPickTarget(o,group);a.state='walk';a.t=14}
-   else if(r<.85){a.state='graze';a.t=5+Math.random()*8}
-   else{a.state='idle';a.t=2+Math.random()*4}
-  }
- }
- // ابتعاد ناعم عن الأغنام المجاورة حتى لا تتداخل
- const minD=sheepDims().L*SHEEP_PEN_SCALE*.75;let px=0,pz=0;
- for(const q of group){if(q===o)continue;const ex=o.position.x-q.position.x,ez=o.position.z-q.position.z,dd=ex*ex+ez*ez;if(dd<minD*minD&&dd>1e-5){const dl=Math.sqrt(dd),k=(minD-dl)/minD;px+=ex/dl*k;pz+=ez/dl*k}}
- o.position.x+=px*dt*.9;o.position.z+=pz*dt*.9;
- if(a.speed>.004){const f=sheepFwdOf(a.yaw);o.position.x+=f[0]*a.speed*dt;o.position.z+=f[1]*a.speed*dt}
- const cx=shClamp(o.position.x,b.x0+.3,b.x1-.3),cz=shClamp(o.position.z,b.z0+.3,b.z1-.3);
- if(cx!==o.position.x||cz!==o.position.z){o.position.x=cx;o.position.z=cz;if(a.state==='walk'){a.state='graze';a.t=3+Math.random()*4}}
- // التصاق بالأرض وميلان مع المنحدر
- const gy=sheepGround(o.position.x,o.position.z)+.025;
- o.position.y+=(gy-o.position.y)*Math.min(1,dt*12);
- const f=sheepFwdOf(a.yaw),g1=sheepGround(o.position.x+f[0]*.5,o.position.z+f[1]*.5),g2=sheepGround(o.position.x-f[0]*.5,o.position.z-f[1]*.5);
- const slope=Math.atan2(g1-g2,1),noClip=!(a.roles.graze||a.roles.idle),grazeT=(a.state==='graze'&&noClip)?.15+.035*Math.sin(now*.004+a.ph):0;
- a.tilt+=(grazeT-a.tilt)*Math.min(1,dt*3);a.pitch+=(slope-a.pitch)*Math.min(1,dt*6);
- let p=a.tilt-a.pitch,roll=0;
- // مجسم بلا أنيميشن (احتياطي): تمايل خفيف مرتبط بالسرعة بدل الانزلاق
- if(!a.mixer&&a.speed>.02){a.ph2=(a.ph2||0)+dt*a.speed*16;o.position.y+=Math.abs(Math.sin(a.ph2))*.03;roll=Math.sin(a.ph2)*.05}
- o.rotation.y=a.yaw;
- if(sheepDims().lenZ){o.rotation.x=p;o.rotation.z=roll}else{o.rotation.z=-p;o.rotation.x=roll}
- // الأنيميشن حسب الحالة
- sheepAnim(o,a.state==='walk'?'walk':a.state,a.speed);
 }
 let SHEEP_LAST_TICK=performance.now();
 function tickSheepMovement(now){
- requestAnimationFrame(tickSheepMovement);
  const dt=Math.min(.05,Math.max(0,(now-SHEEP_LAST_TICK)/1000));SHEEP_LAST_TICK=now;
- if(!SHEEP_BASE||!P||!dt)return;
- for(const grp of [SHEEP_PEN,SHEEP_HOME])for(const o of grp)updateFreeSheep(o,dt,now,grp);
- if(SHEEP_HELD){
-  const o=SHEEP_HELD,a=o.userData.ai,yaw=P.yaw||0,k=Math.min(1,dt*10);
-  const x=P.x+Math.sin(yaw)*.8,z=P.z+Math.cos(yaw)*.8,y=sheepGround(x,z)+.65;
-  o.position.x+=(x-o.position.x)*k;o.position.y+=(y-o.position.y)*k;o.position.z+=(z-o.position.z)*k;
-  const s=o.scale.x+(SHEEP_PEN_SCALE-o.scale.x)*k;o.scale.setScalar(s);
-  a.yaw+=shAng(sheepYawFor(-Math.sin(yaw),-Math.cos(yaw)),a.yaw)*k;o.rotation.set(0,a.yaw,0);
+ for(const m of SHEEP_MIXERS)try{m.update(dt)}catch(e){}
+ // تجوال هادئ داخل حدود الحظيرة حتى لا تبقى الأغنام جامدة.
+ for(const w of SHEEP_WANDER){
+  const o=w.o;
+  if(now>w.next){w.tx=14.2+Math.random()*21.5;w.tz=-145+Math.random()*20;w.next=now+2800+Math.random()*4200}
+  const dx=w.tx-o.position.x,dz=w.tz-o.position.z,d=Math.hypot(dx,dz);
+  if(d>.16){const step=Math.min(d,dt*.42);o.position.x+=dx/d*step;o.position.z+=dz/d*step;const yaw=Math.atan2(dx,dz);let da=yaw-o.rotation.y;da=Math.atan2(Math.sin(da),Math.cos(da));o.rotation.y+=da*Math.min(1,dt*3)}
+  o.position.y=sheepGround(o.position.x,o.position.z)+.025;
+ }
+ if(SHEEP_HELD&&P){
+  const yaw=P.yaw||0;
+  const x=P.x+Math.sin(yaw)*.8,z=P.z+Math.cos(yaw)*.8;
+  SHEEP_HELD.position.set(x,sheepGround(x,z)+.65,z);SHEEP_HELD.rotation.y=yaw+Math.PI;
  }
  for(let i=SHEEP_MOVING.length-1;i>=0;i--){
-  const m=SHEEP_MOVING[i];if(now<m.start)continue;
-  const p=Math.min(1,(now-m.start)/m.duration),q=p*p*(3-2*p),o=m.o;
-  if(m.kind==='in'){
-   const v=m.v,lay=cargoOf(v),sl=lay.slots[m.idx];
-   v.g.updateMatrixWorld(true);
-   const tw=v.g.localToWorld(new THREE.Vector3(sl.x,sl.y,sl.z)),wy=v.g.rotation.y+sl.yaw;
-   o.position.lerpVectors(m.from,tw,q);o.position.y+=Math.sin(Math.PI*p)*.3;
-   o.scale.setScalar(m.fs+(lay.scale-m.fs)*q);
-   o.rotation.set(0,m.fy+shAng(wy,m.fy)*q,0);
-   if(p>=1){
-    S.remove(o);v.g.add(o);o.position.set(sl.x,sl.y,sl.z);o.rotation.set(0,sl.yaw,0);o.scale.setScalar(lay.scale);
-    o.userData.ai.state='cargo';sheepAnim(o,'idle',0);SHEEP_MOVING.splice(i,1);
-   }
-  }else{
-   o.position.lerpVectors(m.from,m.to,q);o.position.y+=Math.sin(Math.PI*p)*.3;
-   o.scale.setScalar(m.fs+(SHEEP_PEN_SCALE-m.fs)*q);
-   o.rotation.set(0,m.fy+shAng(m.ty,m.fy)*q,0);
-   if(p>=1){
-    o.position.copy(m.to);o.rotation.set(0,m.ty,0);o.scale.setScalar(SHEEP_PEN_SCALE);
-    releaseSheep(o,m.yard?SHEEP_YARD_BOX:{x0:m.to.x-6,x1:m.to.x+6,z0:m.to.z-6,z1:m.to.z+6},m.yard);
-    SHEEP_MOVING.splice(i,1);
-   }
+  const a=SHEEP_MOVING[i];if(now<a.start)continue;
+  const p=Math.min(1,(now-a.start)/a.duration),q=p*p*(3-2*p);
+  let target=a.to;
+  if(a.v&&a.v.g){a.v.g.updateMatrixWorld(true);target=a.v.g.localToWorld(a.local.clone())}
+  a.o.position.lerpVectors(a.from,target,q);a.o.position.y+=Math.sin(Math.PI*p)*.22;
+  if(p>=1){
+   if(a.home){a.o.position.copy(a.local);a.o.rotation.y=a.rot;SHEEP_HOME.push(a.o)}
+   else{S.remove(a.o);a.v.g.add(a.o);a.o.position.copy(a.local);a.o.rotation.set(0,0,0);a.v.sheepCargo=a.v.sheepCargo||[]}
+   SHEEP_MOVING.splice(i,1);
   }
  }
- // تحديث الأنيميشن (الأغنام البعيدة جداً تُهمل لتخفيف الحمل)
- for(const o of SHEEP_ALL){
-  const a=o.userData.ai;if(!a.mixer||a.frozen)continue;
-  if(a.state!=='cargo'&&a.state!=='held'&&a.state!=='fly'&&Math.hypot(o.position.x-P.x,o.position.z-P.z)>90)continue;
-  try{a.mixer.update(dt)}catch(e){}
- }
+ requestAnimationFrame(tickSheepMovement);
 }
 requestAnimationFrame(tickSheepMovement);
 // طريق فرعي يصل إلى بيت الأغنام في نهاية الطريق الرئيسي
@@ -1785,65 +1612,44 @@ for(let z=-96;z>=-119;z-=5)sheepBox(.12,.012,.65,25,-.025,z,0xe4e2d8);
 sheepFence(25,-135,24,25,true);
 sheepFence(84,-30,14,16,false);
 RC.push([12.8,37.2,-148,-147.6],[12.8,13.2,-147.6,-122.5],[36.8,37.2,-147.6,-122.5],[12.8,22.1,-122.8,-122.4],[27.9,37.2,-122.8,-122.4]);
-const SHEEP_UI=document.createElement('div');
-SHEEP_UI.id='sheepActionBox';
-SHEEP_UI.style.cssText='display:none;position:fixed;z-index:30;left:50%;bottom:calc(108px + env(safe-area-inset-bottom));transform:translateX(-50%);flex-direction:column-reverse;align-items:center;gap:6px;max-width:92vw';
-app.appendChild(SHEEP_UI);
-let SHEEP_ACTS=[],SHEEP_SIG='';
-function runSheepAction(a){
- if(!a)return;
- if(a.type==='pickup')pickupOneSheep(a.o);
- else if(a.type==='put')putHeldSheepInto(a.v);
- else if(a.type==='drop')dropHeldSheep();
- else if(a.type==='take')takeOutOneSheep(a.v);
- else if(a.type==='unload')unloadSheepAtHome(a.v);
- setTimeout(updateSheepButton,60);
-}
-function setSheepButtons(list){
- SHEEP_ACTS=list;
- const sig=list.map(a=>a.type+a.label).join('|');
- if(sig===SHEEP_SIG)return;
- SHEEP_SIG=sig;SHEEP_UI.innerHTML='';
- list.forEach((a,i)=>{
-  const b=document.createElement('button');b.textContent=a.label;
-  b.style.cssText='padding:10px 16px;border:2px solid #f4d36b;border-radius:15px;background:linear-gradient(135deg,#7b4b20,#4b321f);color:#fff;font:bold 15px Tahoma,Arial;box-shadow:0 5px 16px #0009;white-space:nowrap;max-width:92vw';
-  if(a.dim)b.style.opacity='.65';
-  b.onclick=()=>runSheepAction(SHEEP_ACTS[i]);
-  SHEEP_UI.appendChild(b);
- });
- SHEEP_UI.style.display=list.length?'flex':'none';
-}
+let SHEEP_BTN=document.createElement('button');
+SHEEP_BTN.id='sheepActionBtn';
+SHEEP_BTN.style.cssText='display:none;position:fixed;z-index:30;left:50%;bottom:calc(108px + env(safe-area-inset-bottom));transform:translateX(-50%);padding:12px 18px;border:2px solid #f4d36b;border-radius:15px;background:linear-gradient(135deg,#7b4b20,#4b321f);color:#fff;font:bold 16px Tahoma,Arial;box-shadow:0 5px 16px #0009;white-space:nowrap;max-width:92vw';
+app.appendChild(SHEEP_BTN);
+let SHEEP_ACTION=null;
 function updateSheepButton(){
- const t=window.__tukVehicle;
- if(!t||!SHEEP_BASE||!CAR.loaded||!t.loaded){setSheepButtons([]);return}
- const L=[],name=v=>v===t?'التكتك':'السيارة';
+ const t=window.__tukVehicle;if(!t||!SHEEP_BASE||!CAR.loaded||!t.loaded){SHEEP_BTN.style.display='none';return}
+ SHEEP_ACTION=null;
  if(SHEEP_HELD){
   const near=nearestPlayerVehicle();
-  if(near&&bedDist(near.v)<4.6&&Math.abs(near.v.v||0)<.35){
-   const v=near.v,lay=cargoOf(v),cnt=(v.sheepCargo||[]).length;
-   if(cnt<lay.slots.length&&!(v.slots&&v.slots.some(Boolean)))L.push({type:'put',v,label:'🐑 وضع النعجة في صندوق '+name(v)+' ('+cnt+'/'+lay.slots.length+')'});
-   else L.push({type:'none',label:'🐑 الصندوق غير جاهز لاستقبال النعجة',dim:1});
+  if(near&&near.d<5.2&&Math.abs(near.v.v||0)<.35){
+   const v=near.v,cap=v===t?12:20,count=(v.sheepCargo||[]).length;
+   if(count<cap&&!(v.slots&&v.slots.some(Boolean))){SHEEP_ACTION={type:'put',v};SHEEP_BTN.textContent='🐑 وضع النعجة في صندوق '+(v===t?'التكتك':'السيارة')}
+   else SHEEP_BTN.textContent='🐑 الصندوق غير جاهز لاستقبال النعجة';
+   SHEEP_BTN.style.display='block';return;
   }
-  L.push({type:'drop',label:'⬇️ إنزال النعجة على الأرض'});
- }else if(!DRV){
-  const ns=nearestPenSheep();
-  if(ns)L.push({type:'pickup',o:ns.o,label:'🐑 حمل هذه النعجة'});
-  const near=nearestPlayerVehicle();
-  if(near&&(near.v.sheepCargo||[]).length&&(near.d<6||bedDist(near.v)<4.6)){
-   const v=near.v;
-   L.push({type:'take',v,label:'⬆️ رفع نعجة من صندوق '+name(v)});
-   const atHome=Math.hypot(v.g.position.x-HX,v.g.position.z-HZ)<14;
-   L.push({type:'unload',v,label:atHome?'🐑 تنزيل كل الأغنام في حوش البيت':'🐑 إنزال كل الأغنام بجانب المركبة'});
-  }
- }else{
-  const v=DRV;
-  if((v.sheepCargo||[]).length){
-   const atHome=Math.hypot(v.g.position.x-HX,v.g.position.z-HZ)<14;
-   L.push({type:'unload',v,label:atHome?'🐑 تنزيل الأغنام في حوش البيت':'🐑 إنزال الأغنام بجانب المركبة'});
-  }
+  SHEEP_BTN.style.display='none';return;
  }
- setSheepButtons(L.filter(a=>a.type!=='none'||L.length>=1));
+ if(!DRV){
+  const nearSheep=nearestPenSheep();
+  if(nearSheep){SHEEP_ACTION={type:'pickup',o:nearSheep.o};SHEEP_BTN.textContent='🐑 حمل هذه النعجة';SHEEP_BTN.style.display='block';return}
+ }
+ const near=DRV?{v:DRV,d:0}:nearestPlayerVehicle();
+ if(near&&(near.v.sheepCargo||[]).length&&near.d<6){
+  SHEEP_ACTION={type:'unload',v:near.v};
+  const atHome=Math.hypot(near.v.g.position.x-HX,near.v.g.position.z-HZ)<14;
+  SHEEP_BTN.textContent=atHome?'🐑 تنزيل الأغنام في حوش البيت':'🐑 إنزال الأغنام بجانب المركبة';
+  SHEEP_BTN.style.display='block';return;
+ }
+ SHEEP_BTN.style.display='none';
 }
+SHEEP_BTN.onclick=()=>{
+ if(!SHEEP_ACTION)return;
+ const a=SHEEP_ACTION;SHEEP_BTN.style.display='none';
+ if(a.type==='pickup')pickupOneSheep(a.o);
+ else if(a.type==='put')putHeldSheepInto(a.v);
+ else if(a.type==='unload')unloadSheepAtHome(a.v);
+};
 setInterval(updateSheepButton,250);
 const SHEEP_HOUSE_URL='./sheep_house.glb',SHEEP_MODEL_URL='./sheep.glb';
 try{new THREE.GLTFLoader().load(SHEEP_HOUSE_URL,g=>{
@@ -1864,6 +1670,65 @@ try{new THREE.GLTFLoader().load(SHEEP_MODEL_URL+'?v=1.9.8',g=>{
 },undefined,e=>{console.warn('sheep model',e);clearTimeout(sheepFallbackTimer);initSheepHerd(makeFallbackSheepBase());toast('🐑 تعذّر تحميل الملف؛ تم تشغيل أغنام بديلة')})}catch(e){console.warn(e);clearTimeout(sheepFallbackTimer);initSheepHerd(makeFallbackSheepBase())}
 const sheepUIRefresh=setInterval(updateSheepButton,500);
 window.addEventListener('beforeunload',saveSheepState);
+
+// ===== ⛽ محطة الوقود البعيدة + خزان مستقل لكل مركبة =====
+const GAS_POS=new THREE.Vector3(164,0,-30),GAS_PUMP_POS=new THREE.Vector3(153,0,-30),GAS_SCALE=.18,GAS_PRICE=8;
+const GAS_CAP={tuk:12,car:60};
+let FUEL={tuk:12,car:60};
+try{const fs=JSON.parse(localStorage.getItem('dk_fuel_v1')||'null');if(fs&&fs.v===1){FUEL.tuk=Math.max(0,Math.min(GAS_CAP.tuk,Number(fs.tuk)||0));FUEL.car=Math.max(0,Math.min(GAS_CAP.car,Number(fs.car)||0))}}catch(e){}
+let FUEL_EMPTY_NOTICE=false,FUEL_LAST=new Map(),FUEL_SAVE_AT=0,GAS_STATION=null,GAS_TARGET=null;
+function fuelKey(v){return v===window.__tukVehicle?'tuk':'car'}
+function fuelFor(v){return FUEL[fuelKey(v)]}
+function fuelCapacity(v){return GAS_CAP[fuelKey(v)]}
+function saveFuel(){try{localStorage.setItem('dk_fuel_v1',JSON.stringify({v:1,tuk:FUEL.tuk,car:FUEL.car}))}catch(e){}}
+function fuelDriveTick(dt){
+ const now=performance.now();
+ if(DRV&&DRV.g){
+  const k=fuelKey(DRV),p=DRV.g.position,old=FUEL_LAST.get(k);
+  if(old){const d=Math.hypot(p.x-old.x,p.z-old.z);if(d>.001){FUEL[k]=Math.max(0,FUEL[k]-d*(k==='tuk'?.018:.025));if(FUEL[k]<=.001){FUEL[k]=0;DRV.v=0;if(!FUEL_EMPTY_NOTICE){FUEL_EMPTY_NOTICE=true;toast('⛽ نفد الوقود؛ توجه إلى محطة الوقود')}}}}
+  FUEL_LAST.set(k,{x:p.x,z:p.z});
+ }else{FUEL_LAST.clear();FUEL_EMPTY_NOTICE=false}
+ if(now-FUEL_SAVE_AT>2500){FUEL_SAVE_AT=now;saveFuel()}
+}
+// الطريق الإضافي يواصل الطريق الحالي إلى المحطة دون تغيير مسار الدكاكين أو الحظيرة.
+// المحطة محملة كملف مستقل ليبقى حجم index.html مناسباً، ويُخزّنها عامل الخدمة للعمل دون إنترنت.
+try{new THREE.GLTFLoader().load('./gas_station.glb?v=1.9.8',g=>{
+ const st=g.scene;prep(st);st.rotation.y=Math.PI/2;st.scale.setScalar(GAS_SCALE);st.updateMatrixWorld(true);
+ const bb=new THREE.Box3().setFromObject(st);const gy=sheepGround(GAS_POS.x,GAS_POS.z);
+ st.position.set(GAS_POS.x,gy-bb.min.y,GAS_POS.z);S.add(st);GAS_STATION=st;
+ console.log('Gas station ready',bb.min,bb.max);
+},undefined,e=>{console.warn('gas station model',e);toast('⚠ تعذّر تحميل محطة الوقود؛ تأكد من رفع gas_station.glb')})}catch(e){console.warn('gas station',e)}
+const gasBtn=document.createElement('button');gasBtn.id='gasPrompt';gasBtn.textContent='Gas';gasBtn.style.cssText='display:none;position:fixed;z-index:35;left:50%;bottom:calc(112px + env(safe-area-inset-bottom));transform:translateX(-50%);padding:12px 28px;border:2px solid #ffe18a;border-radius:14px;background:linear-gradient(135deg,#168a42,#075a2b);color:#fff;font:bold 19px Arial;box-shadow:0 5px 18px #000a';app.appendChild(gasBtn);
+const gasModal=document.createElement('div');gasModal.id='gasModal';gasModal.style.cssText='display:none;position:fixed;inset:0;z-index:80;background:#000b;align-items:center;justify-content:center;padding:18px;direction:rtl;font-family:Tahoma,Arial';
+gasModal.innerHTML='<div style="width:min(420px,100%);background:linear-gradient(155deg,#243b32,#101b18);border:2px solid #d9b85b;border-radius:20px;padding:18px;color:#fff;box-shadow:0 15px 45px #000b"><div style="display:flex;align-items:center;justify-content:space-between"><b style="font-size:21px">⛽ محطة الوقود</b><button id="gasClose" style="background:#713b32;padding:7px 12px">✕</button></div><div id="gasVehicle" style="margin:14px 0 8px;color:#ffe18a;font-weight:bold"></div><div id="gasStats" style="line-height:2;font-size:15px"></div><label style="display:block;margin-top:12px">كمية الوقود (لتر)</label><input id="gasLiters" type="number" min="0.1" step="0.1" style="width:100%;box-sizing:border-box;padding:12px;border-radius:10px;border:1px solid #8ca89a;background:#fff;color:#17231d;font-size:18px;margin:7px 0"><div id="gasCost" style="font-weight:bold;color:#ffe18a;margin:8px 0 14px">التكلفة: 0 ج</div><div style="display:flex;gap:8px"><button id="gasFull" class="g" style="flex:1;background:#277b48">تعبئة الخزان بالكامل</button><button id="gasBuy" class="g" style="flex:1;background:#168a42">شراء الوقود</button></div><div style="font-size:11px;opacity:.7;margin-top:12px">سعر اللتر داخل اللعبة: 8 ج — تُحفظ كمية الوقود تلقائياً</div></div>';
+app.appendChild(gasModal);
+const gasEl=id=>document.getElementById(id);
+function closestGasVehicle(){const a=[CAR,window.__tukVehicle].filter(v=>v&&v.g&&v.loaded!==false).map(v=>({v,d:Math.hypot(v.g.position.x-GAS_PUMP_POS.x,v.g.position.z-GAS_PUMP_POS.z)})).sort((a,b)=>a.d-b.d);return a[0]||null}
+function gasOpen(){
+ const near=closestGasVehicle();let v=DRV||((near&&near.d<19)?near.v:null);
+ if(!v)return toast('🚗 أوقف التكتك أو السيارة بجانب مضخة الوقود أولاً');
+ if(Math.abs(v.v||0)>.35)return toast('🛑 أوقف المركبة تماماً قبل تعبئة الوقود');
+ if(Math.hypot(v.g.position.x-GAS_PUMP_POS.x,v.g.position.z-GAS_PUMP_POS.z)>19)return toast('اقترب بالمركبة من مضخة الوقود');
+ GAS_TARGET=v;const cap=fuelCapacity(v),cur=fuelFor(v),max=Math.max(0,cap-cur);
+ gasEl('gasVehicle').textContent=v===window.__tukVehicle?'🛺 مركبة زنجيشن':'🚙 السيارة';
+ gasEl('gasStats').innerHTML='سعة الخزان: <b>'+cap.toFixed(0)+' لتر</b><br>الوقود الحالي: <b>'+cur.toFixed(1)+' لتر</b><br>المتبقي للتعبئة: <b>'+max.toFixed(1)+' لتر</b><br>رصيدك: <b>'+Number(money).toFixed(0)+' ج</b>';
+ gasEl('gasLiters').max=max.toFixed(1);gasEl('gasLiters').value=Math.min(max,10).toFixed(1);gasEl('gasLiters').disabled=max<=0;gasCostUpdate();gasModal.style.display='flex';
+}
+function gasCostUpdate(){const n=Math.max(0,Number(gasEl('gasLiters').value)||0);gasEl('gasCost').textContent='التكلفة: '+(n*GAS_PRICE).toFixed(1)+' ج';}
+gasBtn.onclick=gasOpen;gasEl('gasClose').onclick=()=>gasModal.style.display='none';gasModal.addEventListener('click',e=>{if(e.target===gasModal)gasModal.style.display='none'});gasEl('gasLiters').addEventListener('input',gasCostUpdate);
+gasEl('gasFull').onclick=()=>{if(!GAS_TARGET)return;const n=Math.max(0,fuelCapacity(GAS_TARGET)-fuelFor(GAS_TARGET));gasEl('gasLiters').value=n.toFixed(1);gasCostUpdate()};
+gasEl('gasBuy').onclick=()=>{
+ const v=GAS_TARGET;if(!v)return;const cap=fuelCapacity(v),cur=fuelFor(v),n=Math.max(0,Number(gasEl('gasLiters').value)||0),cost=n*GAS_PRICE;
+ if(Math.abs(v.v||0)>.35)return toast('🛑 أوقف المركبة أولاً');
+ if(n<.1)return toast('أدخل كمية الوقود المطلوبة');if(n>cap-cur+.001)return toast('الكمية أكبر من سعة الخزان المتبقية');if(money<cost)return toast('💸 رصيدك لا يكفي لشراء الوقود');
+ money-=cost;FUEL[fuelKey(v)]=Math.min(cap,cur+n);saveFuel();if(typeof hud==='function')hud();gasModal.style.display='none';toast('✅ تمت تعبئة '+n.toFixed(1)+' لتر — تم خصم '+cost.toFixed(1)+' ج');
+};
+const fuelHud=document.createElement('div');fuelHud.id='fuelHud';fuelHud.style.cssText='display:none;background:#173c2d;color:#fff;border:1px solid #b9dc75;border-radius:8px;padding:5px 9px;font:bold 12px Tahoma;direction:rtl';document.getElementById('hud').appendChild(fuelHud);
+setInterval(()=>{
+ const pos=DRV&&DRV.g?DRV.g.position:P,d=Math.hypot(pos.x-GAS_PUMP_POS.x,pos.z-GAS_PUMP_POS.z);
+ gasBtn.style.display=d<12?'block':'none';
+ if(DRV&&DRV.g){const k=fuelKey(DRV);fuelHud.style.display='block';fuelHud.textContent='⛽ '+FUEL[k].toFixed(1)+' / '+GAS_CAP[k]+' L'}else fuelHud.style.display='none';
+},250);
 
 mainUI();
 })();
