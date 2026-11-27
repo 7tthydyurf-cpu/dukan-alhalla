@@ -151,10 +151,49 @@ canvas{position:absolute;left:0;top:0}
 
 const $=id=>document.getElementById(id);
 const S=new THREE.Scene();S.background=new THREE.Color(0x5b9af0);S.fog=new THREE.Fog(0xa4c6ef,140,640);
-S.add(new THREE.HemisphereLight(0xffffff,0x887766,1.05));const sun=new THREE.DirectionalLight(0xfff0d0,.5);sun.position.set(30,50,20);S.add(sun);
+const hemi=new THREE.HemisphereLight(0xffffff,0x887766,1.05);S.add(hemi);const sun=new THREE.DirectionalLight(0xfff0d0,.5);sun.position.set(30,50,20);S.add(sun);
 const L=c=>new THREE.MeshLambertMaterial({color:c});
 const app=document.createElement('div');app.id='app';document.body.insertBefore(app,document.body.firstChild);[...document.body.children].forEach(e=>{if(e!==app&&e.tagName!=='SCRIPT')app.appendChild(e)});
-const R=new THREE.WebGLRenderer({antialias:true});R.setPixelRatio(Math.min(devicePixelRatio,2));app.insertBefore(R.domElement,app.firstChild);
+const R=new THREE.WebGLRenderer({antialias:true, powerPreference:'high-performance'});
+app.insertBefore(R.domElement,app.firstChild);
+let GFX_MODE='balanced';try{GFX_MODE=localStorage.getItem('dk_gfx')==='ultra'?'ultra':'balanced'}catch(e){}
+function applyGraphicsQuality(mode,notify){
+  GFX_MODE=mode==='ultra'?'ultra':'balanced';
+  try{localStorage.setItem('dk_gfx',GFX_MODE)}catch(e){}
+  const ultra=GFX_MODE==='ultra';
+  R.setPixelRatio(Math.min(window.devicePixelRatio||1,ultra?2.5:1.6));
+  R.shadowMap.enabled=ultra;
+  R.shadowMap.type=THREE.PCFSoftShadowMap;
+  R.toneMapping=ultra?THREE.ACESFilmicToneMapping:THREE.NoToneMapping;
+  R.toneMappingExposure=ultra?1.08:1;
+  R.outputEncoding=THREE.sRGBEncoding;
+  sun.intensity=ultra?.82:.5;
+  hemi.intensity=ultra?1.22:1.05;
+  sun.castShadow=ultra;
+  if(ultra){
+    sun.shadow.mapSize.set(2048,2048);
+    sun.shadow.camera.left=-125;sun.shadow.camera.right=125;
+    sun.shadow.camera.top=125;sun.shadow.camera.bottom=-125;
+    sun.shadow.camera.near=.5;sun.shadow.camera.far=360;
+    sun.shadow.bias=-.00018;sun.shadow.normalBias=.025;
+  }
+  const maxAniso=R.capabilities.getMaxAnisotropy();
+  S.traverse(o=>{
+    if(!o.isMesh)return;
+    o.castShadow=ultra;o.receiveShadow=ultra;
+    const mats=Array.isArray(o.material)?o.material:[o.material];
+    mats.forEach(m=>{
+      if(!m)return;
+      ['map','normalMap','roughnessMap','metalnessMap','alphaMap'].forEach(k=>{
+        if(m[k])m[k].anisotropy=ultra?Math.min(12,maxAniso):Math.min(4,maxAniso);
+      });
+    });
+  });
+  if(notify&&typeof toast==='function')toast(ultra?'✨ تم تفعيل الرسومات الفائقة — قد يزيد استهلاك البطارية':'تم تفعيل الرسومات المتوازنة');
+}
+applyGraphicsQuality(GFX_MODE,false);
+const __sceneAdd=S.add.bind(S);
+S.add=function(){if(GFX_MODE==='ultra'){for(let a=0;a<arguments.length;a++){const o=arguments[a];if(o&&o.traverse)o.traverse(n=>{if(n.isMesh){n.castShadow=true;n.receiveShadow=true}})}}return __sceneAdd.apply(S,arguments)};
 const C=new THREE.PerspectiveCamera(65,2,.1,900);C.rotation.order='YXZ';S.add(C);let ROT=false;
 function layout(){ROT=innerHeight>innerWidth;app.classList.toggle('rot',ROT);const W=app.clientWidth,H=app.clientHeight;R.setSize(W,H);C.aspect=W/H;C.updateProjectionMatrix()}
 addEventListener('resize',layout);addEventListener('orientationchange',()=>setTimeout(layout,250));layout();
@@ -950,7 +989,7 @@ function staffUpdate(dt){
  EMPS.slice().forEach(e=>eUpd(e,dt))}
 
 // ===== الإعدادات: رفع صوت مخصص + فحص التحديثات =====
-const APP_VER='1.7.0';
+const APP_VER='1.9.0';
 const SETS=(()=>{try{return JSON.parse(localStorage.getItem('dk_set')||'{}')}catch(e){return{}}})();
 Object.assign(AUD.vol,SETS.vol||{});SETS.names=SETS.names||{};
 const saveSets=()=>{try{localStorage.setItem('dk_set',JSON.stringify({vol:AUD.vol,names:SETS.names}))}catch(e){}};
@@ -972,12 +1011,13 @@ function renderSet(){const nm=SETS.names;
  $('setBody').innerHTML=KINDS.map(([k,ic,t])=>`<div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.12)"><div style="font-size:15px;font-weight:bold">${ic} ${t}</div><div style="font-size:12px;opacity:.8;margin:3px 0">${nm[k]?'الملف: '+nm[k]:'الصوت الافتراضي'}</div>
  <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><button class="g" data-pick="${k}">📂 اختر ملف</button><button data-test="${k}" style="background:#2a6fb0">▶ تجربة</button>${nm[k]?`<button data-del="${k}" style="background:#c0392b">🗑</button>`:''}</div>
  <div style="display:flex;align-items:center;gap:8px;margin-top:6px"><span style="font-size:12px">🔈</span><input type="range" min="0" max="100" value="${Math.round(AUD.vol[k]*100)}" data-vol="${k}" style="flex:1"><span style="font-size:12px">🔊</span></div></div>`).join('')+
- `<div style="padding:10px 0;font-size:13px">ℹ️ الإصدار الحالي: <b>${APP_VER}</b> <button id="chkUpd" style="margin-right:8px;background:#2a6fb0">🔄 تحقق من التحديث</button></div><div style="padding:6px 0"><button id="resetSave" style="background:#c0392b">🗑 مسح التقدم والبدء من جديد</button><div style="font-size:11px;opacity:.7;margin-top:4px">💾 اللعبة تحفظ تقدمك تلقائياً كل ثانيتين على هذا الجهاز.</div></div><div style="font-size:11px;opacity:.7">يقبل الملفات: mp3 · wav · ogg · m4a — الحد 15MB. الملفات تُحفظ في جهازك وتبقى بعد إغلاق اللعبة.</div>`;
+ `<div style="padding:10px 0;border-bottom:1px solid rgba(255,255,255,.15)"><div style="font-size:15px;font-weight:bold">🎮 جودة الرسومات</div><div style="display:flex;gap:7px;flex-wrap:wrap;margin:8px 0"><button id="gfxBalanced" style="background:${GFX_MODE==='balanced'?'#16834a':'#555'}">⚖️ متوازنة</button><button id="gfxUltra" class="g" style="background:${GFX_MODE==='ultra'?'#16834a':'#1769aa'}">✨ فائقة 4K</button></div><div style="font-size:11px;opacity:.75">الوضع الفائق يرفع دقة العرض والظلال ووضوح الخامات قدر ما يسمح به هاتفك. قد يستهلك بطارية أكثر؛ ويمكن الرجوع إلى المتوازن في أي وقت.</div></div><div style="padding:10px 0;font-size:13px">ℹ️ الإصدار الحالي: <b>${APP_VER}</b> <button id="chkUpd" style="margin-right:8px;background:#2a6fb0">🔄 تحقق من التحديث</button></div><div style="padding:6px 0"><button id="resetSave" style="background:#c0392b">🗑 مسح التقدم والبدء من جديد</button><div style="font-size:11px;opacity:.7;margin-top:4px">💾 اللعبة تحفظ تقدمك تلقائياً كل ثانيتين على هذا الجهاز.</div></div><div style="font-size:11px;opacity:.7">يقبل الملفات: mp3 · wav · ogg · m4a — الحد 15MB. الملفات تُحفظ في جهازك وتبقى بعد إغلاق اللعبة.</div>`;
  const q=s=>$('setBody').querySelectorAll(s);
  q('[data-pick]').forEach(b=>b.onclick=()=>{$('audioIn').dataset.kind=b.dataset.pick;$('audioIn').value='';$('audioIn').click()});
  q('[data-del]').forEach(b=>b.onclick=async()=>{const k=b.dataset.del;await IDB.del(k).catch(()=>{});delete nm[k];if(k==='music')muSet(null);else AUD.buf[k]=null;saveSets();if(DRV&&k==='engine')CAR.engStart();renderSet()});
  q('[data-vol]').forEach(r=>r.oninput=()=>{const k=r.dataset.vol;AUD.vol[k]=r.value/100;if(k==='music')MU.volume=AUD.vol.music;saveSets()});
  q('[data-test]').forEach(b=>b.onclick=()=>testSnd(b.dataset.test));
+ const gb=$('gfxBalanced'),gu=$('gfxUltra');if(gb)gb.onclick=()=>{applyGraphicsQuality('balanced',true);renderSet()};if(gu)gu.onclick=()=>{applyGraphicsQuality('ultra',true);renderSet()};
  const cu=$('chkUpd');if(cu)cu.onclick=()=>checkUpdate(true);
  const rs=$('resetSave');if(rs){let armed=0;rs.onclick=()=>{if(!armed){armed=1;rs.textContent='⚠ اضغط مرة ثانية للتأكيد';setTimeout(()=>{armed=0;rs.textContent='🗑 مسح التقدم والبدء من جديد'},4000)}else resetProgress()}}}
 function testSnd(k){try{if(k==='music'){if(!muUrl)return toast('اختر ملف موسيقى أولاً');muWant=true;if(MU.paused)muPlay();else{MU.pause();muWant=false}return}
@@ -1206,7 +1246,7 @@ const TUK={g:new THREE.Group(),v:0,hd:Math.PI/2,st:0,wr:0,wh:[],fw:[],slots:Arra
  cx:0,cz:1.1,cy:1.62,exs:[-.75,0,.8,1.6,2.4],mg:.7,hitD:[-.6,.2,1,1.8,2.4],hitR:.82,
  spotPos:[0,1.0,2.5],spotTgt:[0,.2,17]};
 for(const k of Object.keys(CAR))if(typeof CAR[k]==='function'&&!(k in TUK))TUK[k]=CAR[k];
-TUK.g.userData.veh=TUK;CAR.g.userData.veh=CAR;
+TUK.g.userData.veh=TUK;CAR.g.userData.veh=CAR;window.__tukVehicle=TUK;
 const X0=-17.5,Z0=8.7;
 TUK.g.position.set(X0,-.1,Z0);TUK.g.rotation.y=TUK.hd;S.add(TUK.g);
 // ---- أماكن الكراتين في الصندوق (٢ × ٣ × ٤ طبقات = ٢٤) ----
@@ -1376,6 +1416,183 @@ let lx=0,lz=0;
 setInterval(()=>{if(!link||!dc||dc.readyState!=='open')return;const sp=Math.hypot(P.x-lx,P.z-lz);lx=P.x;lz=P.z;try{dc.send(JSON.stringify({x:+P.x.toFixed(2),z:+P.z.toFixed(2),y:+P.yaw.toFixed(2),m:sp>.02?1:0}))}catch(_){}},100);
 (function rl(){requestAnimationFrame(rl);if(!rm||!tgt)return;const g=rm.g;g.position.x+=(tgt.x-g.position.x)*.25;g.position.z+=(tgt.z-g.position.z)*.25;let d=tgt.y+Math.PI-g.rotation.y;d=Math.atan2(Math.sin(d),Math.cos(d));g.rotation.y+=d*.25;pose(rm,tgt.m?1:0)})();
 q('bMP').onclick=()=>{q('menu').style.display='none';ov.style.display='flex';multiUI()};
+
+// ===== 🐑 حظيرة الأغنام: 50 رأس + تحميل داخل صندوق التكتك والسيارة =====
+const SHEEP_SAVE_KEY='dk_sheep_v1';
+let SHEEP_STATE={remaining:50,tuk:0,car:0,home:0};
+try{const q=JSON.parse(localStorage.getItem(SHEEP_SAVE_KEY)||'null');if(q&&q.v===1)SHEEP_STATE={remaining:Math.max(0,Math.min(50,q.remaining|0)),tuk:Math.max(0,Math.min(12,q.tuk|0)),car:Math.max(0,Math.min(20,q.car|0)),home:Math.max(0,Math.min(50,q.home|0))}}catch(e){}
+let SHEEP_BASE=null,SHEEP_HOUSE=null,SHEEP_PEN=[],SHEEP_HOME=[],SHEEP_MOVING=[],SHEEP_CARGO_READY=false;
+const SHEEP_GATE=new THREE.Vector3(25,0,-122),SHEEP_HOUSE_POS=[37,-110],SHEEP_HOME_POS=[84,-30];
+const saveSheepState=()=>{try{localStorage.setItem(SHEEP_SAVE_KEY,JSON.stringify({v:1,...SHEEP_STATE}))}catch(e){}};
+const sheepBox=(w,h,d,x,y,z,col=0x80613d)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshLambertMaterial({color:col}));m.position.set(x,y,z);S.add(m);return m};
+function sheepFence(cx,cz,w,d,gate=false){
+ const mat=0x795332,postY=.62;
+ for(let x=-w/2;x<=w/2+.01;x+=2.6){
+  if(gate&&Math.abs(x)<2.7)continue;
+  sheepBox(.14,1.25,.14,cx+x,postY,cz-d/2,mat);
+  sheepBox(.14,1.25,.14,cx+x,postY,cz+d/2,mat);
+ }
+ for(let z=-d/2;z<=d/2+.01;z+=2.6){
+  sheepBox(.14,1.25,.14,cx-w/2,postY,cz+z,mat);
+  sheepBox(.14,1.25,.14,cx+w/2,postY,cz+z,mat);
+ }
+ const rail=(x,z,len,alongX,y)=>sheepBox(alongX?len:.12,.12,alongX?.12:len,x,y,z,mat);
+ [-.5,.25].forEach(y=>{
+  rail(cx,cz-d/2,w, true,y+1.05);rail(cx,cz+d/2,w,true,y+1.05);
+  rail(cx-w/2,cz,d,false,y+1.05);rail(cx+w/2,cz,d,false,y+1.05);
+ });
+ if(gate){
+  // فتحـة بوابة في منتصف السور الجنوبي ليصل اللاعب بالمركبة إلى الحظيرة
+  sheepBox(.14,1.25,.14,cx-2.8,postY,cz+d/2,mat);
+  sheepBox(.14,1.25,.14,cx+2.8,postY,cz+d/2,mat);
+  rail(cx-3.8,cz+d/2,2.0,true,1.05);
+ }
+}
+function makeSheep(scale){
+ const o=SHEEP_BASE.clone(true);o.scale.setScalar(scale);
+ o.traverse(n=>{if(n.isMesh){n.castShadow=true;n.receiveShadow=true;n.frustumCulled=true}});
+ return o;
+}
+function sheepGround(x,z){return typeof hgt==='function'?hgt(x,z):-.1}
+function addPenSheep(n){
+ for(let i=0;i<n;i++){
+  const col=i%10,row=Math.floor(i/10);
+  const x=14.4+col*2.35+(Math.random()-.5)*.65;
+  const z=-126.2-row*4.1+(Math.random()-.5)*.7;
+  const o=makeSheep(.065);o.position.set(x,sheepGround(x,z),z);o.rotation.y=Math.random()*Math.PI*2;
+  S.add(o);SHEEP_PEN.push(o);
+ }
+}
+function addHomeSheep(n){
+ for(let i=0;i<n;i++){
+  const col=i%10,row=Math.floor(i/10);
+  const x=77.4+col*1.25+(Math.random()-.5)*.2;
+  const z=-36.5+row*1.35+(Math.random()-.5)*.2;
+  const o=makeSheep(.065);o.position.set(x,sheepGround(x,z),z);o.rotation.y=Math.random()*Math.PI*2;
+  S.add(o);SHEEP_HOME.push(o);
+ }
+}
+function cargoLocal(v,i){
+ if(v===window.__tukVehicle){
+  const row=Math.floor(i/4),col=i%4;
+  return new THREE.Vector3((col-1.5)*.18,.685,.53-row*.48);
+ }
+ const row=Math.floor(i/5),col=i%5;
+ return new THREE.Vector3((col-2)*.27,.865,-.10-row*.38);
+}
+function attachSavedCargo(v,count){
+ if(!v||!count||!SHEEP_BASE)return;
+ v.sheepCargo=v.sheepCargo||[];
+ const cap=v===window.__tukVehicle?12:20;
+ for(let i=0;i<Math.min(count,cap);i++){
+  const o=makeSheep(v===window.__tukVehicle ? .045 : .055),p=cargoLocal(v,i);
+  o.rotation.set(0,0,0);v.g.add(o);o.position.copy(p);v.sheepCargo.push(o);
+ }
+}
+function restoreSheepCargo(){
+ if(SHEEP_CARGO_READY||!SHEEP_BASE||!CAR.loaded||!window.__tukVehicle||!window.__tukVehicle.loaded)return;
+ attachSavedCargo(CAR,SHEEP_STATE.car);
+ attachSavedCargo(window.__tukVehicle,SHEEP_STATE.tuk);
+ SHEEP_CARGO_READY=true;
+}
+function loadSheepInto(v){
+ if(!v||!SHEEP_BASE)return toast('⏳ مجسم الأغنام لسه يتحمّل');
+ if(Math.abs(v.v||0)>.35)return toast('🛑 أوقف المركبة أولاً');
+ const cap=v===window.__tukVehicle?12:20;
+ const current=(v.sheepCargo||[]).length;
+ const free=cap-current;
+ if(free<=0)return toast('🐑 صندوق المركبة ممتلئ');
+ if(v.slots&&v.slots.some(Boolean))return toast('📦 أفرغ الكراتين أولاً قبل تحميل الأغنام');
+ const n=Math.min(free,SHEEP_STATE.remaining,SHEEP_PEN.length);
+ if(n<=0)return toast('🐑 لا توجد أغنام متبقية في الحظيرة');
+ v.sheepCargo=v.sheepCargo||[];
+ v.g.updateMatrixWorld(true);
+ for(let i=0;i<n;i++){
+  const o=SHEEP_PEN.pop(),idx=v.sheepCargo.length,local=cargoLocal(v,idx);
+  const from=o.position.clone(),to=v.g.localToWorld(local.clone());
+  v.sheepCargo.push(o);
+  SHEEP_MOVING.push({o,v,local,from,to,start:performance.now()+i*95,duration:520,rot:o.rotation.y});
+ }
+ SHEEP_STATE.remaining-=n;
+ if(v===window.__tukVehicle)SHEEP_STATE.tuk=v.sheepCargo.length;else SHEEP_STATE.car=v.sheepCargo.length;
+ saveSheepState();
+ toast('🐑 جارٍ تحميل '+n+' رأس غنم داخل صندوق '+(v===window.__tukVehicle?'التكتك':'السيارة'));
+}
+function unloadSheepAtHome(v){
+ const a=v&&v.sheepCargo||[];if(!a.length)return;
+ if(Math.abs(v.v||0)>.35)return toast('🛑 أوقف المركبة قبل تنزيل الأغنام');
+ const n=a.length;
+ a.forEach((o,i)=>{
+  const col=(SHEEP_HOME.length+i)%10,row=Math.floor((SHEEP_HOME.length+i)/10);
+  const target=new THREE.Vector3(77.4+col*1.25,sheepGround(77.4+col*1.25,-36.5+row*1.35),-36.5+row*1.35);
+  const from=v.g.localToWorld(o.position.clone());
+  S.add(o);o.position.copy(from);
+  SHEEP_MOVING.push({o,v:null,local:target,from,to:target.clone(),start:performance.now()+i*70,duration:450,rot:Math.random()*6.28,home:true});
+ });
+ v.sheepCargo=[];if(v===window.__tukVehicle)SHEEP_STATE.tuk=0;else SHEEP_STATE.car=0;
+ SHEEP_STATE.home=Math.min(50,SHEEP_STATE.home+n);saveSheepState();
+ toast('✅ تم تنزيل '+n+' رأس غنم في حوش البيت');
+}
+function tickSheepMovement(now){
+ for(let i=SHEEP_MOVING.length-1;i>=0;i--){
+  const a=SHEEP_MOVING[i];if(now<a.start)continue;
+  const p=Math.min(1,(now-a.start)/a.duration),q=p*p*(3-2*p);
+  let target=a.to;
+  if(a.v&&a.v.g){a.v.g.updateMatrixWorld(true);target=a.v.g.localToWorld(a.local.clone())}
+  a.o.position.lerpVectors(a.from,target,q);a.o.position.y+=Math.sin(Math.PI*p)*.22;
+  if(p>=1){
+   if(a.home){a.o.position.copy(a.local);a.o.rotation.y=a.rot;SHEEP_HOME.push(a.o)}
+   else{S.remove(a.o);a.v.g.add(a.o);a.o.position.copy(a.local);a.o.rotation.set(0,0,0)}
+   SHEEP_MOVING.splice(i,1);
+  }
+ }
+ requestAnimationFrame(tickSheepMovement);
+}
+requestAnimationFrame(tickSheepMovement);
+// طريق فرعي يصل إلى بيت الأغنام في نهاية الطريق الرئيسي
+plane(8,27,0x3d4145,25,-.045,-108);
+for(let z=-96;z>=-119;z-=5)sheepBox(.12,.012,.65,25,-.025,z,0xe4e2d8);
+sheepFence(25,-135,24,25,true);
+sheepFence(84,-30,14,16,false);
+RC.push([12.8,37.2,-148,-147.6],[12.8,13.2,-147.6,-122.5],[36.8,37.2,-147.6,-122.5],[12.8,22.1,-122.8,-122.4],[27.9,37.2,-122.8,-122.4]);
+let SHEEP_BTN=document.createElement('button');
+SHEEP_BTN.id='sheepActionBtn';
+SHEEP_BTN.style.cssText='display:none;position:fixed;z-index:30;left:50%;bottom:calc(108px + env(safe-area-inset-bottom));transform:translateX(-50%);padding:12px 18px;border:2px solid #f4d36b;border-radius:15px;background:linear-gradient(135deg,#7b4b20,#4b321f);color:#fff;font:bold 16px Tahoma,Arial;box-shadow:0 5px 16px #0009;white-space:nowrap;max-width:92vw';
+app.appendChild(SHEEP_BTN);
+let SHEEP_ACTION=null;
+function closestSheepVehicle(){
+ const t=window.__tukVehicle;if(DRV)return DRV;
+ return [CAR,t].filter(v=>v&&v.g&&v.loaded!==false).sort((a,b)=>Math.hypot(a.g.position.x-25,a.g.position.z+122)-Math.hypot(b.g.position.x-25,b.g.position.z+122))[0]||CAR;
+}
+function updateSheepButton(){
+ const t=window.__tukVehicle;if(!t||!SHEEP_BASE||!CAR.loaded||!t.loaded){SHEEP_BTN.style.display='none';return}
+ const v=closestSheepVehicle(),p=v.g.position,nearRanch=Math.hypot(p.x-SHEEP_GATE.x,p.z-SHEEP_GATE.z)<11;
+ const nearHome=Math.hypot(p.x-HX,p.z-HZ)<14;
+ const onFootNear=Math.hypot(P.x-p.x,P.z-p.z)<5.5;
+ const canUse=DRV===v||onFootNear;
+ const count=(v.sheepCargo||[]).length,cap=v===t?12:20;
+ SHEEP_ACTION=null;
+ if(count>0&&nearHome&&canUse){SHEEP_ACTION={type:'unload',v};SHEEP_BTN.textContent='🐑 تنزيل '+count+' رأس غنم في حوش البيت'}
+ else if(nearRanch&&canUse&&SHEEP_STATE.remaining>0&&count<cap&&!(v.slots&&v.slots.some(Boolean))){SHEEP_ACTION={type:'load',v};SHEEP_BTN.textContent='🐑 تحميل '+Math.min(cap-count,SHEEP_STATE.remaining)+' رأس غنم · متبقي '+SHEEP_STATE.remaining}
+ else{SHEEP_BTN.style.display='none';return}
+ SHEEP_BTN.style.display='block';
+}
+SHEEP_BTN.onclick=()=>{if(!SHEEP_ACTION)return;const a=SHEEP_ACTION;SHEEP_BTN.style.display='none';if(a.type==='load')loadSheepInto(a.v);else unloadSheepAtHome(a.v)};
+setInterval(updateSheepButton,450);
+const SHEEP_HOUSE_URL='./sheep_house.glb',SHEEP_MODEL_URL='./sheep.glb';
+try{new THREE.GLTFLoader().load(SHEEP_HOUSE_URL,g=>{
+ const h=g.scene;prep(h);h.rotation.x=-Math.PI/2;h.scale.setScalar(.38);h.updateMatrixWorld(true);
+ const bb=new THREE.Box3().setFromObject(h);h.position.set(SHEEP_HOUSE_POS[0],sheepGround(SHEEP_HOUSE_POS[0],SHEEP_HOUSE_POS[1])-bb.min.y,SHEEP_HOUSE_POS[1]);S.add(h);SHEEP_HOUSE=h;
+},undefined,e=>{console.warn('sheep house model',e);toast('⚠ تعذّر تحميل بيت الأغنام')})}catch(e){console.warn(e)}
+try{new THREE.GLTFLoader().load(SHEEP_MODEL_URL,g=>{
+ SHEEP_BASE=g.scene;
+ addPenSheep(SHEEP_STATE.remaining);
+ addHomeSheep(SHEEP_STATE.home);
+ restoreSheepCargo();
+},undefined,e=>{console.warn('sheep model',e);toast('⚠ تعذّر تحميل مجسم الأغنام')})}catch(e){console.warn(e)}
+const sheepRestoreTimer=setInterval(()=>{restoreSheepCargo();updateSheepButton();if(SHEEP_CARGO_READY)clearInterval(sheepRestoreTimer)},700);
+window.addEventListener('beforeunload',saveSheepState);
+
 mainUI();
 })();
 
