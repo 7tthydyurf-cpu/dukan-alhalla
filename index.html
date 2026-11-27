@@ -990,7 +990,7 @@ function staffUpdate(dt){
  EMPS.slice().forEach(e=>eUpd(e,dt))}
 
 // ===== الإعدادات: رفع صوت مخصص + فحص التحديثات =====
-const APP_VER='1.9.8';
+const APP_VER='1.9.9';
 const SETS=(()=>{try{return JSON.parse(localStorage.getItem('dk_set')||'{}')}catch(e){return{}}})();
 Object.assign(AUD.vol,SETS.vol||{});SETS.names=SETS.names||{};
 const saveSets=()=>{try{localStorage.setItem('dk_set',JSON.stringify({vol:AUD.vol,names:SETS.names}))}catch(e){}};
@@ -1341,7 +1341,7 @@ setTimeout(()=>TUK.load(),3200);
 let last=performance.now(),spT=3;
 (function loop(now){requestAnimationFrame(loop);const dt=Math.min(.05,(now-last)/1000);last=now;DT=dt;KR.upd(dt);
 let f=jy+K.f-K.b,r=jx+K.r-K.l;const m=Math.hypot(f,r);if(m>1){f/=m;r/=m}
-if(DRV){if(typeof fuelFor==='function'&&fuelFor(DRV)<=0.001){DRV.v=0;if(!FUEL_EMPTY_NOTICE){FUEL_EMPTY_NOTICE=true;toast('⛽ نفد الوقود؛ توجه إلى محطة الوقود')} }else driveUpdate(dt,f,r)}fuelDriveTick(dt);if(DRV!==CAR)CAR.idle(dt);if(TUKV&&DRV!==TUKV)TUKV.idle(dt);if(!DRV&&!KR.on&&m>.05&&!SIT){const sp=(run?6:3.4)*dt,vx=-Math.sin(P.yaw)*f+Math.cos(P.yaw)*r,vz=-Math.cos(P.yaw)*f-Math.sin(P.yaw)*r;
+if(DRV){if(typeof fuelFor==='function'&&fuelFor(DRV)<=0.001){DRV.v=0;if(!FUEL_EMPTY_NOTICE){FUEL_EMPTY_NOTICE=true;toast('⛽ نفد الوقود؛ توجه إلى محطة الوقود')} }else driveUpdate(dt,f,r)}if(DRV!==CAR)CAR.idle(dt);if(TUKV&&DRV!==TUKV)TUKV.idle(dt);if(!DRV&&!KR.on&&m>.05&&!SIT){const sp=(run?6:3.4)*dt,vx=-Math.sin(P.yaw)*f+Math.cos(P.yaw)*r,vz=-Math.cos(P.yaw)*f-Math.sin(P.yaw)*r;
 if(!blocked(P.x+vx*sp,P.z))P.x=Math.max(-230,Math.min(230,P.x+vx*sp));if(!blocked(P.x,P.z+vz*sp))P.z=Math.max(-230,Math.min(230,P.z+vz*sp))}
 if(DRV){carCam(dt)}else if(KR.on){KR.cam(dt)}else{camY+=((SIT?SIT.h:1.7)-camY)*Math.min(1,dt*8);C.position.set(P.x,camY,P.z)}C.rotation.set(P.pitch,P.yaw,0);
 if(!atHome&&!over){tm+=dt*2;if(tm>=1320){over=true;toast('🌙 انتهى الدوام — روح البيت من ⚙')}}
@@ -1665,7 +1665,7 @@ function initSheepHerd(base,clips=[]){
 }
 // A fallback timer prevents an indefinitely blank pen if the external GLB request stalls.
 const sheepFallbackTimer=setTimeout(()=>{if(!SHEEP_BASE){console.warn('sheep GLB timeout; using fallback sheep');initSheepHerd(makeFallbackSheepBase());toast('🐑 تم تشغيل مجسم أغنام بديل');}},9000);
-try{new THREE.GLTFLoader().load(SHEEP_MODEL_URL+'?v=1.9.8',g=>{
+try{new THREE.GLTFLoader().load(SHEEP_MODEL_URL+'?v=1.9.9',g=>{
  clearTimeout(sheepFallbackTimer);initSheepHerd(g.scene,g.animations||[]);
 },undefined,e=>{console.warn('sheep model',e);clearTimeout(sheepFallbackTimer);initSheepHerd(makeFallbackSheepBase());toast('🐑 تعذّر تحميل الملف؛ تم تشغيل أغنام بديلة')})}catch(e){console.warn(e);clearTimeout(sheepFallbackTimer);initSheepHerd(makeFallbackSheepBase())}
 const sheepUIRefresh=setInterval(updateSheepButton,500);
@@ -1692,12 +1692,18 @@ function fuelDriveTick(dt){
 }
 // الطريق الإضافي يواصل الطريق الحالي إلى المحطة دون تغيير مسار الدكاكين أو الحظيرة.
 // المحطة محملة كملف مستقل ليبقى حجم index.html مناسباً، ويُخزّنها عامل الخدمة للعمل دون إنترنت.
-try{new THREE.GLTFLoader().load('./gas_station.glb?v=1.9.8',g=>{
- const st=g.scene;prep(st);st.rotation.y=Math.PI/2;st.scale.setScalar(GAS_SCALE);st.updateMatrixWorld(true);
- const bb=new THREE.Box3().setFromObject(st);const gy=sheepGround(GAS_POS.x,GAS_POS.z);
- st.position.set(GAS_POS.x,gy-bb.min.y,GAS_POS.z);S.add(st);GAS_STATION=st;
- console.log('Gas station ready',bb.min,bb.max);
-},undefined,e=>{console.warn('gas station model',e);toast('⚠ تعذّر تحميل محطة الوقود؛ تأكد من رفع gas_station.glb')})}catch(e){console.warn('gas station',e)}
+let GAS_LOADING=false;
+function loadGasStation(){
+ if(GAS_LOADING||GAS_STATION)return;GAS_LOADING=true;
+ try{new THREE.GLTFLoader().load('./gas_station.glb?v=1.9.9',g=>{
+  try{const st=g.scene;prep(st);st.rotation.y=Math.PI/2;st.scale.setScalar(GAS_SCALE);st.updateMatrixWorld(true);
+   const bb=new THREE.Box3().setFromObject(st);const gy=sheepGround(GAS_POS.x,GAS_POS.z);
+   st.position.set(GAS_POS.x,gy-bb.min.y,GAS_POS.z);S.add(st);GAS_STATION=st;console.log('Gas station ready',bb.min,bb.max);
+  }catch(err){console.warn('gas station setup',err);toast('⚠ تعذّر تجهيز محطة الوقود')}
+  GAS_LOADING=false;
+ },undefined,e=>{GAS_LOADING=false;console.warn('gas station model',e);toast('⚠ تعذّر تحميل محطة الوقود؛ تحقق من gas_station.glb')})}
+ catch(e){GAS_LOADING=false;console.warn('gas station',e)}
+}
 const gasBtn=document.createElement('button');gasBtn.id='gasPrompt';gasBtn.textContent='Gas';gasBtn.style.cssText='display:none;position:fixed;z-index:35;left:50%;bottom:calc(112px + env(safe-area-inset-bottom));transform:translateX(-50%);padding:12px 28px;border:2px solid #ffe18a;border-radius:14px;background:linear-gradient(135deg,#168a42,#075a2b);color:#fff;font:bold 19px Arial;box-shadow:0 5px 18px #000a';app.appendChild(gasBtn);
 const gasModal=document.createElement('div');gasModal.id='gasModal';gasModal.style.cssText='display:none;position:fixed;inset:0;z-index:80;background:#000b;align-items:center;justify-content:center;padding:18px;direction:rtl;font-family:Tahoma,Arial';
 gasModal.innerHTML='<div style="width:min(420px,100%);background:linear-gradient(155deg,#243b32,#101b18);border:2px solid #d9b85b;border-radius:20px;padding:18px;color:#fff;box-shadow:0 15px 45px #000b"><div style="display:flex;align-items:center;justify-content:space-between"><b style="font-size:21px">⛽ محطة الوقود</b><button id="gasClose" style="background:#713b32;padding:7px 12px">✕</button></div><div id="gasVehicle" style="margin:14px 0 8px;color:#ffe18a;font-weight:bold"></div><div id="gasStats" style="line-height:2;font-size:15px"></div><label style="display:block;margin-top:12px">كمية الوقود (لتر)</label><input id="gasLiters" type="number" min="0.1" step="0.1" style="width:100%;box-sizing:border-box;padding:12px;border-radius:10px;border:1px solid #8ca89a;background:#fff;color:#17231d;font-size:18px;margin:7px 0"><div id="gasCost" style="font-weight:bold;color:#ffe18a;margin:8px 0 14px">التكلفة: 0 ج</div><div style="display:flex;gap:8px"><button id="gasFull" class="g" style="flex:1;background:#277b48">تعبئة الخزان بالكامل</button><button id="gasBuy" class="g" style="flex:1;background:#168a42">شراء الوقود</button></div><div style="font-size:11px;opacity:.7;margin-top:12px">سعر اللتر داخل اللعبة: 8 ج — تُحفظ كمية الوقود تلقائياً</div></div>';
@@ -1725,7 +1731,9 @@ gasEl('gasBuy').onclick=()=>{
 };
 const fuelHud=document.createElement('div');fuelHud.id='fuelHud';fuelHud.style.cssText='display:none;background:#173c2d;color:#fff;border:1px solid #b9dc75;border-radius:8px;padding:5px 9px;font:bold 12px Tahoma;direction:rtl';document.getElementById('hud').appendChild(fuelHud);
 setInterval(()=>{
+ fuelDriveTick(.25);
  const pos=DRV&&DRV.g?DRV.g.position:P,d=Math.hypot(pos.x-GAS_PUMP_POS.x,pos.z-GAS_PUMP_POS.z);
+ if(!GAS_STATION&&!GAS_LOADING&&Math.hypot(pos.x-GAS_POS.x,pos.z-GAS_POS.z)<115)loadGasStation();
  gasBtn.style.display=d<12?'block':'none';
  if(DRV&&DRV.g){const k=fuelKey(DRV);fuelHud.style.display='block';fuelHud.textContent='⛽ '+FUEL[k].toFixed(1)+' / '+GAS_CAP[k]+' L'}else fuelHud.style.display='none';
 },250);
