@@ -989,7 +989,7 @@ function staffUpdate(dt){
  EMPS.slice().forEach(e=>eUpd(e,dt))}
 
 // ===== الإعدادات: رفع صوت مخصص + فحص التحديثات =====
-const APP_VER='1.9.0';
+const APP_VER='1.9.1';
 const SETS=(()=>{try{return JSON.parse(localStorage.getItem('dk_set')||'{}')}catch(e){return{}}})();
 Object.assign(AUD.vol,SETS.vol||{});SETS.names=SETS.names||{};
 const saveSets=()=>{try{localStorage.setItem('dk_set',JSON.stringify({vol:AUD.vol,names:SETS.names}))}catch(e){}};
@@ -1186,7 +1186,7 @@ const KR={on:false,loaded:false,v:0,hd:Math.PI/2,st:0,wr:0,t:0,g:null,tilt:null,
   [D.wR,D.wL].forEach(w=>{const pv=new THREE.Group();pv.position.set(w.pv[0]*SC,w.pv[1]*SC,w.pv[2]*SC);const m=mk(w);m.scale.setScalar(SC);pv.add(m);T.add(pv);this.wheels.push(pv)});
   // ظل دائري ناعم (بديل رخيص عن shadow map على Android)
   const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d'),gr=x.createRadialGradient(32,32,2,32,32,32);gr.addColorStop(0,'rgba(0,0,0,.55)');gr.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=gr;x.fillRect(0,0,64,64);
-  const sh=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false}));sh.rotation.x=-Math.PI/2;sh.scale.set(2.6,4.4,1);sh.position.y=-this.GY+.04;G.add(sh);
+  const sh=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false}));sh.rotation.set(0,0,0);sh.scale.set(2.6,4.4,1);sh.position.y=-this.GY+.04;G.add(sh);
   G.rotation.y=this.hd;this.g=G;this.tilt=T;this.place();S_.add(G);this.loaded=true;try{$('karoD').textContent=''}catch(_){}
  }catch(e){console.log('karo load',e)}},
  gh(x,z){return typeof hgt==='function'?hgt(x,z):0},
@@ -1459,7 +1459,7 @@ function addPenSheep(n){
   const col=i%10,row=Math.floor(i/10);
   const x=14.4+col*2.35+(Math.random()-.5)*.65;
   const z=-126.2-row*4.1+(Math.random()-.5)*.7;
-  const o=makeSheep(.065);o.position.set(x,sheepGround(x,z),z);o.rotation.y=Math.random()*Math.PI*2;
+  const o=makeSheep(.105);o.position.set(x,sheepGround(x,z),z);o.rotation.y=Math.random()*Math.PI*2;
   S.add(o);SHEEP_PEN.push(o);
  }
 }
@@ -1468,7 +1468,7 @@ function addHomeSheep(n){
   const col=i%10,row=Math.floor(i/10);
   const x=77.4+col*1.25+(Math.random()-.5)*.2;
   const z=-36.5+row*1.35+(Math.random()-.5)*.2;
-  const o=makeSheep(.065);o.position.set(x,sheepGround(x,z),z);o.rotation.y=Math.random()*Math.PI*2;
+  const o=makeSheep(.105);o.position.set(x,sheepGround(x,z),z);o.rotation.y=Math.random()*Math.PI*2;
   S.add(o);SHEEP_HOME.push(o);
  }
 }

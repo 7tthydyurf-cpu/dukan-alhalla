@@ -1,5 +1,5 @@
 // دكان الحلة — تخزين كامل للتشغيل دون إنترنت
-const VER = '1.9.0';
+const VER = '1.9.1';
 const CACHE = 'dukkan-' + VER;
 const IDX = new URL('index.html', self.registration.scope).href;
 const KARO = new URL('karoD.txt', self.registration.scope).href;
