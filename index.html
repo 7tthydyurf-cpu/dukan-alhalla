@@ -989,7 +989,7 @@ function staffUpdate(dt){
  EMPS.slice().forEach(e=>eUpd(e,dt))}
 
 // ===== الإعدادات: رفع صوت مخصص + فحص التحديثات =====
-const APP_VER='1.9.2';
+const APP_VER='1.9.3';
 const SETS=(()=>{try{return JSON.parse(localStorage.getItem('dk_set')||'{}')}catch(e){return{}}})();
 Object.assign(AUD.vol,SETS.vol||{});SETS.names=SETS.names||{};
 const saveSets=()=>{try{localStorage.setItem('dk_set',JSON.stringify({vol:AUD.vol,names:SETS.names}))}catch(e){}};
@@ -1422,7 +1422,7 @@ const SHEEP_SAVE_KEY='dk_sheep_v1';
 let SHEEP_STATE={remaining:50,tuk:0,car:0,home:0};
 try{const q=JSON.parse(localStorage.getItem(SHEEP_SAVE_KEY)||'null');if(q&&q.v===1)SHEEP_STATE={remaining:Math.max(0,Math.min(50,q.remaining|0)),tuk:Math.max(0,Math.min(12,q.tuk|0)),car:Math.max(0,Math.min(20,q.car|0)),home:Math.max(0,Math.min(50,q.home|0))}}catch(e){}
 let SHEEP_BASE=null,SHEEP_HOUSE=null,SHEEP_PEN=[],SHEEP_HOME=[],SHEEP_MOVING=[],SHEEP_CARGO_READY=false;
-const SHEEP_GATE=new THREE.Vector3(25,0,-122),SHEEP_HOUSE_POS=[25,-153],SHEEP_HOME_POS=[84,-30];
+const SHEEP_GATE=new THREE.Vector3(25,0,-122),SHEEP_HOUSE_POS=[25,-141],SHEEP_HOME_POS=[84,-30];
 const saveSheepState=()=>{try{localStorage.setItem(SHEEP_SAVE_KEY,JSON.stringify({v:1,...SHEEP_STATE}))}catch(e){}};
 const sheepBox=(w,h,d,x,y,z,col=0x80613d)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshLambertMaterial({color:col}));m.position.set(x,y,z);S.add(m);return m};
 function sheepFence(cx,cz,w,d,gate=false){
@@ -1448,17 +1448,25 @@ function sheepFence(cx,cz,w,d,gate=false){
   rail(cx-3.8,cz+d/2,2.0,true,1.05);
  }
 }
-function makeSheep(scale){
- const o=SHEEP_BASE.clone(true);o.scale.setScalar(scale);
- o.traverse(n=>{if(n.isMesh){n.castShadow=true;n.receiveShadow=true;n.frustumCulled=true}});
- return o;
+function makeFallbackSheepBase(){
+ const g=new THREE.Group();
+ const wool=new THREE.MeshLambertMaterial({color:0xf0e8d8}),face=new THREE.MeshLambertMaterial({color:0x65564b}),leg=new THREE.MeshLambertMaterial({color:0x4a4039}),eye=new THREE.MeshBasicMaterial({color:0x171717});
+ const part=(geo,mat,x,y,z)=>{const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;g.add(m);return m};
+ part(new THREE.SphereGeometry(1,12,10),wool,0,2.5,0).scale.set(2.15,1.65,2.9);
+ part(new THREE.SphereGeometry(1,12,10),face,0,3.05,2.65).scale.set(.82,.92,1.05);
+ part(new THREE.SphereGeometry(1,10,8),wool,0,2.7,1.95).scale.set(.72,1.0,.72);
+ for(const x of [-.9,.9]) for(const z of [-1.9,1.85]){const m=part(new THREE.CylinderGeometry(.19,.23,1.8,8),leg,x,.9,z);m.rotation.z=(x<0?-.035:.035)}
+ for(const x of [-.62,.62]){part(new THREE.SphereGeometry(.12,8,6),face,x,3.48,3.25).scale.set(1,.55,1.7);part(new THREE.SphereGeometry(.105,8,6),eye,x*.7,3.25,3.53)}
+ part(new THREE.SphereGeometry(.3,8,6),wool,0,2.7,-3.0).scale.set(.35,.35,.65);
+ return g;
 }
+function makeSheep(scale){const o=SHEEP_BASE.clone(true);o.scale.setScalar(scale);o.traverse(n=>{if(n.isMesh){n.castShadow=true;n.receiveShadow=true;n.frustumCulled=false}});return o;}
 function sheepGround(x,z){return typeof hgt==='function'?hgt(x,z):-.1}
 function addPenSheep(n){
  for(let i=0;i<n;i++){
   const col=i%10,row=Math.floor(i/10);
-  const x=14.4+col*2.35+(Math.random()-.5)*.65;
-  const z=-126.2-row*4.1+(Math.random()-.5)*.7;
+  const x=14.5+col*2.25+(Math.random()-.5)*.35;
+  const z=-125.5-row*2.0+(Math.random()-.5)*.3;
   const o=makeSheep(.16);o.position.set(x,sheepGround(x,z)+.025,z);o.rotation.y=Math.random()*Math.PI*2;
   S.add(o);SHEEP_PEN.push(o);
  }
@@ -1584,11 +1592,17 @@ try{new THREE.GLTFLoader().load(SHEEP_HOUSE_URL,g=>{
  const h=g.scene;prep(h);h.rotation.set(0,0,0);h.scale.setScalar(.28);h.updateMatrixWorld(true);
  const bb=new THREE.Box3().setFromObject(h);h.position.set(SHEEP_HOUSE_POS[0],sheepGround(SHEEP_HOUSE_POS[0],SHEEP_HOUSE_POS[1])-bb.min.y,SHEEP_HOUSE_POS[1]);S.add(h);SHEEP_HOUSE=h;
 },undefined,e=>{console.warn('sheep house model',e);toast('⚠ تعذّر تحميل بيت الأغنام')})}catch(e){console.warn(e)}
-try{new THREE.GLTFLoader().load(SHEEP_MODEL_URL,g=>{
- SHEEP_BASE=g.scene;prep(SHEEP_BASE);SHEEP_STATE.remaining=Math.max(0,50-SHEEP_STATE.tuk-SHEEP_STATE.car-SHEEP_STATE.home);addPenSheep(SHEEP_STATE.remaining);
- addHomeSheep(SHEEP_STATE.home);
- restoreSheepCargo();
-},undefined,e=>{console.warn('sheep model',e);toast('⚠ تعذّر تحميل مجسم الأغنام')})}catch(e){console.warn(e)}
+function initSheepHerd(base){
+ if(SHEEP_BASE)return;
+ SHEEP_BASE=base;prep(SHEEP_BASE);
+ SHEEP_STATE.remaining=Math.max(0,50-SHEEP_STATE.tuk-SHEEP_STATE.car-SHEEP_STATE.home);
+ addPenSheep(SHEEP_STATE.remaining);addHomeSheep(SHEEP_STATE.home);restoreSheepCargo();saveSheepState();
+}
+// A fallback timer prevents an indefinitely blank pen if the external GLB request stalls.
+const sheepFallbackTimer=setTimeout(()=>{if(!SHEEP_BASE){console.warn('sheep GLB timeout; using fallback sheep');initSheepHerd(makeFallbackSheepBase());toast('🐑 تم تشغيل مجسم أغنام بديل');}},9000);
+try{new THREE.GLTFLoader().load(SHEEP_MODEL_URL+'?v=1.9.3',g=>{
+ clearTimeout(sheepFallbackTimer);initSheepHerd(g.scene);
+},undefined,e=>{console.warn('sheep model',e);clearTimeout(sheepFallbackTimer);initSheepHerd(makeFallbackSheepBase());toast('🐑 تعذّر تحميل الملف؛ تم تشغيل أغنام بديلة')})}catch(e){console.warn(e);clearTimeout(sheepFallbackTimer);initSheepHerd(makeFallbackSheepBase())}
 const sheepRestoreTimer=setInterval(()=>{restoreSheepCargo();updateSheepButton();if(SHEEP_CARGO_READY)clearInterval(sheepRestoreTimer)},700);
 window.addEventListener('beforeunload',saveSheepState);
 
