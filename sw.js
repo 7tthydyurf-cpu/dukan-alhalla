@@ -1,11 +1,12 @@
 // دكان الحلة — تخزين كامل للتشغيل دون إنترنت
-const VER = '1.9.7';
+const VER = '1.9.8';
 const CACHE = 'dukkan-' + VER;
 const IDX = new URL('index.html', self.registration.scope).href;
 const KARO = new URL('karoD.txt', self.registration.scope).href;
 const MODEL = new URL('zongshen.glb', self.registration.scope).href;
 const SHEEP_HOUSE = new URL('sheep_house.glb', self.registration.scope).href;
-const SHEEP_MODEL = new URL('sheep.glb?v=1.9.7', self.registration.scope).href;
+const SHEEP_MODEL = new URL('sheep.glb?v=1.9.8', self.registration.scope).href;
+const GAS_STATION = new URL('gas_station.glb?v=1.9.8', self.registration.scope).href;
 const VERSION = new URL('version.json', self.registration.scope).href;
 const LIBS = [
   'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
@@ -37,6 +38,7 @@ self.addEventListener('install', event => {
       cacheURL(cache, MODEL),
       cacheURL(cache, SHEEP_HOUSE),
       cacheURL(cache, SHEEP_MODEL),
+      cacheURL(cache, GAS_STATION),
       cacheURL(cache, VERSION)
     ]);
     await self.skipWaiting();
