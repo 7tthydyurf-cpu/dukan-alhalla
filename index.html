@@ -205,7 +205,7 @@ for(let r=0;r<8;r++)for(let i=-1;i<4;i++){g.fillStyle=`hsl(${8+Math.random()*8},
 const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;return t})();
 function brick(w,h,d,x,y,z){const t=BT.clone();t.needsUpdate=true;t.repeat.set(Math.max(w,d),h);return box(w,h,d,0,x,y,z,new THREE.MeshLambertMaterial({map:t}))}
 // world
-const STX=44,STZ=-78;function hgt(x,z){const d=Math.hypot(x-10,z),t=Math.min(1,Math.max(0,(d-145)/250)),s=t*t*(3-2*t),n=.5*Math.sin(x*.011+1.3)*Math.cos(z*.013)+.3*Math.sin(x*.027-z*.021)+.2*Math.sin(x*.05+z*.047);return -.1+s*(75+55*n)}
+const STX=44,STZ=-78;function hgt(x,z){const d=Math.hypot(x-10,z),t=Math.min(1,Math.max(0,(d-125)/210)),s=t*t*(3-2*t),n=.5*Math.sin(x*.011+1.3)*Math.cos(z*.013)+.3*Math.sin(x*.027-z*.021)+.2*Math.sin(x*.05+z*.047);return -.1+s*(75+55*n)}
 function buildTerrain(){const g=new THREE.PlaneGeometry(1400,1400,170,170);g.rotateX(-Math.PI/2);const p=g.attributes.position,col=new Float32Array(p.count*3);
 for(let i=0;i<p.count;i++){const x=p.getX(i),z=p.getZ(i),h=hgt(x,z);p.setY(i,h);const t=Math.min(1,Math.max(0,h/55)),v=(Math.sin(x*.9)*Math.cos(z*.8)+Math.sin(x*.37+z*.31))*.025;col[i*3]=.12+.34*t+v;col[i*3+1]=.38-.14*t+v;col[i*3+2]=.11+.03*t+v}
 g.setAttribute('color',new THREE.BufferAttribute(col,3));g.computeVertexNormals();
@@ -321,7 +321,7 @@ function loopify(buf){try{const XF=Math.min(Math.floor(buf.sampleRate*.35),Math.
 (function(){const evs=['pointerdown','touchstart','touchend','mousedown','click','keydown'],un=()=>{try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();const b=AC.createBuffer(1,1,22050),s=AC.createBufferSource();s.buffer=b;s.connect(AC.destination);s.start(0);if(AC.state==='running')evs.forEach(ev=>removeEventListener(ev,un,true))}catch(e){}};evs.forEach(ev=>addEventListener(ev,un,true))})();
 Object.assign(CAR,{
 sp(k){const L=k/12|0,i=k%12;return[(i%3-1)*.55,(this.by||.81)+L*.27,(this.bz||-.15)-(i/3|0)*.45]},
-gear:'P',hand:false,gas:0,brake:0,gasT:0,brakeT:0,whl:0,whlHold:false,lights:false,sig:0,haz:false,sigTurned:false,
+gear:'P',vmax:55.56,hand:false,gas:0,brake:0,gasT:0,brakeT:0,whl:0,whlHold:false,lights:false,sig:0,haz:false,sigTurned:false,
 cam:'in',oy:0,op:.32,dist:7.5,lastLook:0,ok:false,eng:null,hornO:null,bl:null,spot:null,
 door:{R:{a:1,t:1,p:null,dir:1},L:{a:1,t:1,p:null,dir:-1}},
 setup(s){try{
@@ -412,13 +412,13 @@ upd(dt){
 },
 // ---------- واجهة السائق ----------
 spBg:null,
-drawSpd(kmh){const cv=$('spd'),g=cv.getContext('2d'),W=276,cx=138,cy=138,MX=180;
+drawSpd(kmh){const cv=$('spd'),g=cv.getContext('2d'),W=276,cx=138,cy=138,MX=this===window.__tukVehicle?180:200,RED=MX===180?140:160;
  if(!this.spBg){const b=document.createElement('canvas');b.width=b.height=W;const h=b.getContext('2d');
   let gr=h.createRadialGradient(cx,cy,12,cx,cy,132);gr.addColorStop(0,'#0e3668');gr.addColorStop(1,'#041430');
   h.fillStyle=gr;h.beginPath();h.arc(cx,cy,130,0,7);h.fill();h.lineWidth=7;h.strokeStyle='#1aa9ff';h.stroke();h.lineWidth=2;h.strokeStyle='#8fe0ff';h.beginPath();h.arc(cx,cy,121,0,7);h.stroke();
   const an=v=>(135+v/MX*270)*Math.PI/180;
-  for(let v=0;v<=MX;v+=5){const big=v%20===0,a=an(v),r1=big?100:108,r2=117;h.strokeStyle=v>=140?'#ff4d4d':'#e8f8ff';h.lineWidth=big?3:1.5;h.beginPath();h.moveTo(cx+Math.cos(a)*r1,cy+Math.sin(a)*r1);h.lineTo(cx+Math.cos(a)*r2,cy+Math.sin(a)*r2);h.stroke();
-   if(big){h.fillStyle=v>=140?'#ff7676':'#fff';h.font='bold 15px Arial';h.textAlign='center';h.textBaseline='middle';h.fillText(v,cx+Math.cos(a)*82,cy+Math.sin(a)*82)}}
+  for(let v=0;v<=MX;v+=5){const big=v%20===0,a=an(v),r1=big?100:108,r2=117;h.strokeStyle=v>=RED?'#ff4d4d':'#e8f8ff';h.lineWidth=big?3:1.5;h.beginPath();h.moveTo(cx+Math.cos(a)*r1,cy+Math.sin(a)*r1);h.lineTo(cx+Math.cos(a)*r2,cy+Math.sin(a)*r2);h.stroke();
+   if(big){h.fillStyle=v>=RED?'#ff7676':'#fff';h.font='bold 15px Arial';h.textAlign='center';h.textBaseline='middle';h.fillText(v,cx+Math.cos(a)*82,cy+Math.sin(a)*82)}}
   this.spBg=b}
  g.clearRect(0,0,W,W);g.drawImage(this.spBg,0,0);
  const a=(135+Math.min(MX+6,kmh)/MX*270)*Math.PI/180;
@@ -494,10 +494,10 @@ function driveUpdate(dt,f,r){const c=DRV||CAR;
  else if(!c.whlHold)c.whl*=Math.max(0,1-5*dt);
  const sIn=c.whl/180,v=c.v,G=c.gear;
  // قوة المحرك حسب الجير
- let a=0;if(!c.hand){if(G==='D')a=c.gas*(c.acc||5.4)*(1-Math.max(0,v)/(c.vmax||21));else if(G==='R')a=-c.gas*3.8*(1-Math.max(0,-v)/6)}
+ let a=0;if(!c.hand){if(G==='D'){const drag=.25+v*v*.0002;a=c.gas*((c.acc||5.4)*(1-Math.max(0,v)/(c.vmax||21))+drag)}else if(G==='R')a=-c.gas*3.8*(1-Math.max(0,-v)/6)}
  c.v+=a*dt;
  if(G==='P'){c.v*=Math.max(0,1-18*dt);if(Math.abs(c.v)<.05)c.v=0}
- else{let dec=(c.gas<.05?(G==='N'?.25:.9):.25)+c.v*c.v*.004;if(c.brake>.02)dec+=c.brake*13;if(c.hand)dec+=9;
+ else{let dec=(c.gas<.05?(G==='N'?.25:.9):.25)+c.v*c.v*.0002;if(c.brake>.02)dec+=c.brake*13;if(c.hand)dec+=9;
   const nv=Math.abs(c.v)-dec*dt;c.v=nv>0?Math.sign(c.v)*nv:0}
  // الباب مفتوح = سرعة محدودة
  if((c.door.R.a>.12||c.door.L.a>.12)&&c.ok&&Math.abs(c.v)>2.2)c.v=Math.sign(c.v)*Math.max(2.2,Math.abs(c.v)-8*dt);
@@ -596,8 +596,8 @@ function glb(id,cb){try{new THREE.GLTFLoader().parse(b64($(id).textContent.trim(
 function prep(sc){sc.traverse(o=>{if(!o.isMesh)return;(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>{['map','normalMap','metalnessMap','roughnessMap'].forEach(k=>{if(m[k]){m[k].anisotropy=8;if(k==='map')m[k].encoding=THREE.LinearEncoding}});if(m.color)m.color.multiplyScalar(.8)})})}
 let RA=null,RD=null;function roads(){if(!RA||!RD)return;FBm.forEach(m=>S.remove(m));
 for(let k=-10;k<10;k++){const t=RA.clone(true);t.rotation.y=Math.PI/2;t.position.set(25,0,k*10+5);S.add(t)}
-const dt=(x,z)=>{const t=RD.clone(true);t.position.set(x,0,z);S.add(t);const m=[];t.traverse(o=>{if(o.name&&o.name.indexOf('grass_tufts')>=0)m.push(o)});TU.push({x,z,m})};
-for(let k=0;k<7;k++)dt(13.2-11.8*k,12);for(let k=0;k<3;k++)dt(36.8+11.8*k,-30);for(let x=72.2;x<=143.0;x+=11.8)dt(x,-30)}
+const dt=(x,z)=>{const t=RD.clone(true);t.position.set(x,hgt(x,z)+.03,z);S.add(t);const m=[];t.traverse(o=>{if(o.name&&o.name.indexOf('grass_tufts')>=0)m.push(o)});TU.push({x,z,m})};
+for(let k=0;k<7;k++)dt(13.2-11.8*k,12);for(let k=0;k<3;k++)dt(36.8+11.8*k,-30);for(let x=72.2;x<=143.0;x+=11.8)dt(x,-30);for(let x=154.8;x<=166.6;x+=11.8)dt(x,-30)}
 glb('roadA',s=>{prep(s);RA=s;roads()});glb('roadD',s=>{prep(s);RD=s;roads()});
 function lod(){TU.forEach(t=>{const v=Math.hypot(t.x-P.x,t.z-P.z)<45;t.m.forEach(o=>o.visible=v)})}
 function pose(c,m){if(c.rig)poseR(c,m);else poseP(c,m)}
@@ -990,7 +990,7 @@ function staffUpdate(dt){
  EMPS.slice().forEach(e=>eUpd(e,dt))}
 
 // ===== الإعدادات: رفع صوت مخصص + فحص التحديثات =====
-const APP_VER='1.9.9';
+const APP_VER='1.10.0';
 const SETS=(()=>{try{return JSON.parse(localStorage.getItem('dk_set')||'{}')}catch(e){return{}}})();
 Object.assign(AUD.vol,SETS.vol||{});SETS.names=SETS.names||{};
 const saveSets=()=>{try{localStorage.setItem('dk_set',JSON.stringify({vol:AUD.vol,names:SETS.names}))}catch(e){}};
@@ -1243,7 +1243,7 @@ const TUK={g:new THREE.Group(),v:0,hd:Math.PI/2,st:0,wr:0,wh:[],fw:[],slots:Arra
  gear:'P',hand:false,gas:0,brake:0,gasT:0,brakeT:0,whl:0,whlHold:false,lights:false,sig:0,haz:false,sigTurned:false,
  cam:'in',oy:0,op:.32,dist:6.5,lastLook:0,eng:null,hornO:null,bl:null,spot:null,aL:0,aR:0,
  door:{R:{a:0,t:0,p:null,dir:1},L:{a:0,t:0,p:null,dir:-1}},
- wb:2.13,wrad:.29,acc:3.8,vmax:13.5,lk:1.1,lh:1.1,
+ wb:2.13,wrad:.29,acc:3.8,vmax:50,lk:1.1,lh:1.1,
  cx:0,cz:1.1,cy:1.62,exs:[-.75,0,.8,1.6,2.4],mg:.7,hitD:[-.6,.2,1,1.8,2.4],hitR:.82,
  spotPos:[0,1.0,2.5],spotTgt:[0,.2,17]};
 for(const k of Object.keys(CAR))if(typeof CAR[k]==='function'&&!(k in TUK))TUK[k]=CAR[k];
@@ -1665,7 +1665,7 @@ function initSheepHerd(base,clips=[]){
 }
 // A fallback timer prevents an indefinitely blank pen if the external GLB request stalls.
 const sheepFallbackTimer=setTimeout(()=>{if(!SHEEP_BASE){console.warn('sheep GLB timeout; using fallback sheep');initSheepHerd(makeFallbackSheepBase());toast('🐑 تم تشغيل مجسم أغنام بديل');}},9000);
-try{new THREE.GLTFLoader().load(SHEEP_MODEL_URL+'?v=1.9.9',g=>{
+try{new THREE.GLTFLoader().load(SHEEP_MODEL_URL+'?v=1.10.0',g=>{
  clearTimeout(sheepFallbackTimer);initSheepHerd(g.scene,g.animations||[]);
 },undefined,e=>{console.warn('sheep model',e);clearTimeout(sheepFallbackTimer);initSheepHerd(makeFallbackSheepBase());toast('🐑 تعذّر تحميل الملف؛ تم تشغيل أغنام بديلة')})}catch(e){console.warn(e);clearTimeout(sheepFallbackTimer);initSheepHerd(makeFallbackSheepBase())}
 const sheepUIRefresh=setInterval(updateSheepButton,500);
@@ -1673,19 +1673,19 @@ window.addEventListener('beforeunload',saveSheepState);
 
 // ===== ⛽ محطة الوقود البعيدة + خزان مستقل لكل مركبة =====
 const GAS_POS=new THREE.Vector3(164,0,-30),GAS_PUMP_POS=new THREE.Vector3(153,0,-30),GAS_SCALE=.18,GAS_PRICE=8;
-const GAS_CAP={tuk:12,car:60};
-let FUEL={tuk:12,car:60};
-try{const fs=JSON.parse(localStorage.getItem('dk_fuel_v1')||'null');if(fs&&fs.v===1){FUEL.tuk=Math.max(0,Math.min(GAS_CAP.tuk,Number(fs.tuk)||0));FUEL.car=Math.max(0,Math.min(GAS_CAP.car,Number(fs.car)||0))}}catch(e){}
+const GAS_CAP={tuk:100,car:100};
+let FUEL={tuk:100,car:100};
+try{const fs=JSON.parse(localStorage.getItem('dk_fuel_v1')||'null');if(fs&&fs.v===2){FUEL.tuk=Math.max(0,Math.min(100,Number(fs.tuk)||0));FUEL.car=Math.max(0,Math.min(100,Number(fs.car)||0))}else if(fs&&fs.v===1){FUEL.tuk=Math.max(0,Math.min(100,(Number(fs.tuk)||0)*(100/12)));FUEL.car=Math.max(0,Math.min(100,(Number(fs.car)||0)*(100/60)))}}catch(e){}
 let FUEL_EMPTY_NOTICE=false,FUEL_LAST=new Map(),FUEL_SAVE_AT=0,GAS_STATION=null,GAS_TARGET=null;
 function fuelKey(v){return v===window.__tukVehicle?'tuk':'car'}
 function fuelFor(v){return FUEL[fuelKey(v)]}
 function fuelCapacity(v){return GAS_CAP[fuelKey(v)]}
-function saveFuel(){try{localStorage.setItem('dk_fuel_v1',JSON.stringify({v:1,tuk:FUEL.tuk,car:FUEL.car}))}catch(e){}}
+function saveFuel(){try{localStorage.setItem('dk_fuel_v1',JSON.stringify({v:2,tuk:FUEL.tuk,car:FUEL.car}))}catch(e){}}
 function fuelDriveTick(dt){
  const now=performance.now();
  if(DRV&&DRV.g){
   const k=fuelKey(DRV),p=DRV.g.position,old=FUEL_LAST.get(k);
-  if(old){const d=Math.hypot(p.x-old.x,p.z-old.z);if(d>.001){FUEL[k]=Math.max(0,FUEL[k]-d*(k==='tuk'?.018:.025));if(FUEL[k]<=.001){FUEL[k]=0;DRV.v=0;if(!FUEL_EMPTY_NOTICE){FUEL_EMPTY_NOTICE=true;toast('⛽ نفد الوقود؛ توجه إلى محطة الوقود')}}}}
+  if(old){const d=Math.hypot(p.x-old.x,p.z-old.z);if(d>.001){FUEL[k]=Math.max(0,FUEL[k]-d*(k==='tuk'?.0005:.0006));if(FUEL[k]<=.001){FUEL[k]=0;DRV.v=0;if(!FUEL_EMPTY_NOTICE){FUEL_EMPTY_NOTICE=true;toast('⛽ نفد الوقود؛ توجه إلى محطة الوقود')}}}}
   FUEL_LAST.set(k,{x:p.x,z:p.z});
  }else{FUEL_LAST.clear();FUEL_EMPTY_NOTICE=false}
  if(now-FUEL_SAVE_AT>2500){FUEL_SAVE_AT=now;saveFuel()}
@@ -1695,10 +1695,10 @@ function fuelDriveTick(dt){
 let GAS_LOADING=false;
 function loadGasStation(){
  if(GAS_LOADING||GAS_STATION)return;GAS_LOADING=true;
- try{new THREE.GLTFLoader().load('./gas_station.glb?v=1.9.9',g=>{
+ try{new THREE.GLTFLoader().load('./gas_station.glb?v=1.10.0',g=>{
   try{const st=g.scene;prep(st);st.rotation.y=Math.PI/2;st.scale.setScalar(GAS_SCALE);st.updateMatrixWorld(true);
    const bb=new THREE.Box3().setFromObject(st);const gy=sheepGround(GAS_POS.x,GAS_POS.z);
-   st.position.set(GAS_POS.x,gy-bb.min.y,GAS_POS.z);S.add(st);GAS_STATION=st;console.log('Gas station ready',bb.min,bb.max);
+   st.position.set(GAS_POS.x,gy-bb.min.y+.45,GAS_POS.z);S.add(st);GAS_STATION=st;console.log('Gas station ready',bb.min,bb.max);
   }catch(err){console.warn('gas station setup',err);toast('⚠ تعذّر تجهيز محطة الوقود')}
   GAS_LOADING=false;
  },undefined,e=>{GAS_LOADING=false;console.warn('gas station model',e);toast('⚠ تعذّر تحميل محطة الوقود؛ تحقق من gas_station.glb')})}
